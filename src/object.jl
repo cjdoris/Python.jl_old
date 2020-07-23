@@ -60,19 +60,29 @@ end
 
 safe(o::PyObject) = isnull(o) ? pythrow() : o
 
+iserr(o::PyObject) = isnull(o)
+value(o::PyObject) = o
 
 ### DEFAULT CONVERSION
+
+const PyFloatLike = Union{Float16,Float32,Float64}
+const PyComplexLike = Complex{T} where {T<:PyFloatLike}
 
 unsafe_pyobj(T::Type, o::PyObjRef) = PyObject{T}(PyObjRef(o), false)
 unsafe_pyobj(T::Type, o) = unsafe_pyobj(T, unsafe_pyobj(o))
 
 unsafe_pyobj(o::PyObjRef) = unsafe_pyobj(CPyObject, o)
+unsafe_pyobj(o::CPyAmbigErr{<:PyObject}) = o.value
+unsafe_pyobj(o::CPyNoErr{<:PyObject}) = o.value
 unsafe_pyobj(o::PyObject) = o
 unsafe_pyobj(o::Nothing) = unsafe_pynone()
 unsafe_pyobj(o::Bool) = unsafe_pybool(o)
 unsafe_pyobj(o::AbstractString) = unsafe_pystr(o)
 unsafe_pyobj(o::Tuple) = unsafe_pytuple_fromiter(o)
 unsafe_pyobj(o::Integer) = unsafe_pyint(o)
+unsafe_pyobj(o::PyFloatLike) = unsafe_pyfloat(o)
+unsafe_pyobj(o::PyComplexLike) = unsafe_pycomplex(o)
+unsafe_pyobj(o::AbstractRange{<:Integer}) = unsafe_pyrange(o)
 
 PyObject(o::PyObject) = o
 PyObject(o) = safe(unsafe_pyobj(o))
@@ -105,8 +115,8 @@ unsafe_pyrepr(o) =
     unsafe_pyrepr(unsafe_pyobj(o))
 unsafe_pyrepr(::Type{String}, o) =
     unsafe_pystr_asjuliastring(unsafe_pyrepr(o))
-pyrepr(args...) =
-    safe(unsafe_pyrepr(args...))
+pyrepr(args...; kwargs...) =
+    safe(unsafe_pyrepr(args...; kwargs...))
 export pyrepr
 
 unsafe_pyascii(o::PyObject) =
@@ -115,8 +125,8 @@ unsafe_pyascii(o) =
     unsafe_pyascii(unsafe_pyobj(o))
 unsafe_pyascii(::Type{String}, o) =
     unsafe_pystr_asjuliastring(unsafe_pyascii(o))
-pyascii(args...) =
-    safe(unsafe_pyascii(args...))
+pyascii(args...; kwargs...) =
+    safe(unsafe_pyascii(args...; kwargs...))
 export pyascii
 
 unsafe_pystr(o::PyObject) =
@@ -125,16 +135,16 @@ unsafe_pystr(o) =
     unsafe_pystr(unsafe_pyobj(o))
 unsafe_pystr(::Type{String}, o) =
     unsafe_pystr_asjuliastring(unsafe_pystr(o))
-pystr(args...) =
-    safe(unsafe_pystr(args...))
+pystr(args...; kwargs...) =
+    safe(unsafe_pystr(args...; kwargs...))
 export pystr
 
 unsafe_pybytes(o::PyObject) =
     isnull(o) ? pynull() : @cpycall :PyObject_Bytes(o::CPyPtr)::CPyNewPtr
 unsafe_pybytes(o) =
     unsafe_pybytes(unsafe_pyobj(o))
-pybytes(args...) =
-    safe(unsafe_pybytes(args...))
+pybytes(args...; kwargs...) =
+    safe(unsafe_pybytes(args...; kwargs...))
 export pybytes
 
 unsafe_pydir(o::PyObject) =
@@ -267,7 +277,9 @@ function unsafe_pycall_args(func, args, kwargs=())
     if isempty(kwargs)
         return @cpycall :PyObject_Call(f::CPyPtr, a::CPyPtr, C_NULL::Ptr{Cvoid})::CPyNewPtr
     else
-        error("keyword arguments not implemented")
+        k = unsafe_pydict_fromstringpairs(kwargs)
+        isnull(k) && return pynull()
+        return @cpycall :PyObject_Call(f::CPyPtr, a::CPyPtr, k::CPyPtr)::CPyNewPtr
     end
 end
 pycall_args(func, args, kwargs=()) =
@@ -338,13 +350,13 @@ export pydelitem
 ### BASE
 
 function Base.show(io::IO, o::PyObject)
+    get(io, :typeinfo, Any) === typeof(o) ||
+        print(io, "py: ")
     if isnull(o)
         print(io, "<NULL>")
     else
         print(io, pyrepr(String, o))
     end
-    get(io, :typeinfo, Any) === typeof(o) ||
-        print(io, " :: ", typeof(o))
 end
 
 function Base.print(io::IO, o::PyObject)
@@ -361,20 +373,12 @@ Base.getproperty(o::PyObject, a::Symbol) =
 _getproperty(o, ::Val{a}) where {a} =
     pygetattr(o, a)
 
-_getproperty(o, ::Val{Symbol("b!")}) =
-    pyistrue(o)
-
-_getproperty(o, ::Val{Symbol("s!")}) =
-    pystr(String, o)
-
-_getproperty(o, ::Val{Symbol("r!")}) =
-    pyrepr(String, o)
-
-_getproperty(o, ::Val{Symbol("i!")}) =
-    pyint_convert(Int, pyint(o))
-
-_getproperty(o, ::Val{Symbol("u!")}) =
-    pyint_convert(UInt, pyint(o))
+_getproperty(o, ::Val{Symbol("b!")}) = pyistrue(o)
+_getproperty(o, ::Val{Symbol("s!")}) = pystr(String, o)
+_getproperty(o, ::Val{Symbol("r!")}) = pyrepr(String, o)
+_getproperty(o, ::Val{Symbol("i!")}) = pyint_convert(Int, pyint(o))
+_getproperty(o, ::Val{Symbol("u!")}) = pyint_convert(UInt, pyint(o))
+_getproperty(o, ::Val{Symbol("f!")}) = pyfloat_convert(Float64, pyfloat(o))
 
 Base.setproperty!(o::PyObject, a::Symbol, v) =
     pysetattr(o, a, v)
@@ -392,6 +396,8 @@ Base.:(> )(o1::PyObject, o2::PyObject) = pygt(o1, o2)
 (f::PyObject)(args...; kwargs...) = pycall_args(f, args, kwargs)
 
 Base.length(o::PyObject) = convert(Int, pylen(o))
+Base.firstindex(o::PyObject) = 0
+Base.lastindex(o::PyObject) = length(o)-1
 
 Base.IteratorSize(::Type{<:PyObject}) = Base.SizeUnknown()
 

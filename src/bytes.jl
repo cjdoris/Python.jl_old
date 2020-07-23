@@ -1,3 +1,9 @@
+_pybytestype = pynulltype()
+unsafe_pybytestype() =
+    @unsafe_cacheget_object _pybytestype :PyBytes_Type
+pybytestype() = safe(unsafe_pybytestype())
+export pybytestype
+
 function unsafe_pybytes_asstringandsize(o)
     isnull(o) && return ValueOrError{Tuple{Ptr{Cchar}, CPy_ssize_t}}()
     buf = Ref{Ptr{Cchar}}(C_NULL)
@@ -14,3 +20,7 @@ function unsafe_pybytes_asjuliastring(o)
         return ValueOrError(unsafe_string(value(x)...))
     end
 end
+
+unsafe_pybytes(args...; kwargs...) =
+    unsafe_pycall_args(unsafe_pybytestype(), args, kwargs)
+export pybytes

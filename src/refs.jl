@@ -25,23 +25,35 @@ value(o::PyObjRef) = o
 
 iserr(o::Cvoid) = pyerror_occurred()
 value(o::Cvoid) = o
+
+abstract type AbstractCPyCallType end
+
+iserr(o::AbstractCPyCallType) = error("not implemented")
+value(o::AbstractCPyCallType) = error("not implemented")
 cpycall_errhook(o) = nothing
 cpycall_returnhook(o) = o
+cpycall_ctype(::Type{T}) where {T<:AbstractCPyCallType} = cpycall_ctype(fieldtype(T, 1))
+cpycall_toc(o::AbstractCPyCallType) = getfield(o, 1)
+cpycall_fromc(::Type{T}, o) where {T<:AbstractCPyCallType} = T(o)
+
+cpycall_ctype(::Type{T}) where {T} = T
+cpycall_toc(o) = o
+cpycall_fromc(::Type{T}, o) where {T} = convert(T, o)
 
 """
     CPyPtr
 
 Use as an argument type in `ccall` for `PyObject*` arguments that don't steal a reference.
 """
-struct CPyPtr
+struct CPyPtr <: AbstractCPyCallType
     ptr :: Ptr{Cvoid}
 end
 
 ptr(p::CPyPtr) = p.ptr
 
 Base.cconvert(::Type{CPyPtr}, o::PyObjRef) = o
-
 Base.unsafe_convert(::Type{CPyPtr}, o::PyObjRef) = CPyPtr(o.ptr)
+Base.unsafe_convert(::Type{Ptr{Cvoid}}, o::CPyPtr) = o.ptr
 
 """
     CPyStealPtr
@@ -50,7 +62,7 @@ Use as an argument type in `ccall` for `PyObject*` arguments that steal the refe
 
 If the true argument is a `PyObjRef` (or `PyObject`), the reference count is automatically increased.
 """
-struct CPyStealPtr
+struct CPyStealPtr <: AbstractCPyCallType
     ptr :: Ptr{Cvoid}
 end
 
@@ -63,7 +75,45 @@ function Base.unsafe_convert(::Type{CPyStealPtr}, o::PyObjRef)
     CPyStealPtr(o.ptr)
 end
 
+Base.unsafe_convert(::Type{Ptr{Cvoid}}, o::CPyStealPtr) = o.ptr
+
 cpycall_errhook(p::CPyStealPtr) = ccall((:Py_DecRef, PYLIB), Cvoid, (Ptr{Cvoid},), p.ptr)
+
+"""
+    CPyNoErr{T}
+
+Use as a return type in `ccall` when the result is never an error.
+"""
+struct CPyNoErr{T} <: AbstractCPyCallType
+    value :: T
+end
+
+CPyNoErr{T}(args...) where {T} = CPyNoErr(T(args...))
+
+iserr(o::CPyNoErr) = false
+value(o::CPyNoErr) = value(o.value)
+
+cpycall_returnhook(o::CPyNoErr) = CPyNoErr(cpycall_returnhook(o.value))
+
+ptr(o::CPyNoErr) = ptr(o.value)
+
+"""
+    CPyAmbigErr{T}
+
+Use as a return type in `ccall` when the result error value is also a valid return value.
+"""
+struct CPyAmbigErr{T} <: AbstractCPyCallType
+    value :: T
+end
+
+CPyAmbigErr{T}(args...) where {T} = CPyAmbigErr(T(args...))
+
+iserr(o::CPyAmbigErr) = iserr(o.value) && pyerror_occurred()
+value(o::CPyAmbigErr) = value(o.value)
+
+cpycall_returnhook(o::CPyAmbigErr) = CPyAmbigErr(cpycall_returnhook(o.value))
+
+ptr(o::CPyAmbigErr) = ptr(o.value)
 
 """
     CPyNewPtr
@@ -72,10 +122,12 @@ Use as a return type in `ccall` for a new `PyObject*` reference.
 
 Should be immediately wrapped with `PyObjRef(ptr)`.
 """
-struct CPyNewPtr
+struct CPyNewPtr <: AbstractCPyCallType
     ptr :: Ptr{Cvoid}
 end
 CPyNewPtr() = CPyNewPtr(C_NULL)
+
+Base.convert(::Type{CPyNewPtr}, x::Ptr) = CPyNewPtr(x)
 
 ptr(p::CPyNewPtr) = p.ptr
 iserr(p::CPyNewPtr) = isnull(ptr(p))
@@ -95,10 +147,12 @@ cpycall_returnhook(o::CPyNewPtr) = unsafe_pyobj(PyObjRef(o))
 
 Use as a return type in `ccall` for a borrowed `PyObject*` reference.
 """
-struct CPyBorrowedPtr
+struct CPyBorrowedPtr <: AbstractCPyCallType
     ptr :: Ptr{Cvoid}
 end
 CPyBorrowedPtr() = CPyBorrowedPtr(C_NULL)
+
+Base.convert(::Type{CPyBorrowedPtr}, x::Ptr) = CPyNewPtr(x)
 
 ptr(p::CPyBorrowedPtr) = p.ptr
 iserr(p::CPyBorrowedPtr) = isnull(ptr(p))
@@ -119,7 +173,7 @@ cpycall_returnhook(o::CPyBorrowedPtr) = unsafe_pyobj(PyObjRef(o))
 
 Use as a return type in `ccall` for a `Cint` representing a boolean, with `-1` representing an error.
 """
-struct CPyBool
+struct CPyBool <: AbstractCPyCallType
     value :: Cint
 end
 CPyBool() = CPyBool(-1)
@@ -128,62 +182,37 @@ iserr(o::CPyBool) = o.value == -1
 value(o::CPyBool) = o.value != 0
 
 """
-    CPyInteger{T<:Integer}
+    CPyNumber{T<:Number}
 
 Use as a return type in `ccall` for a `T`, with `-1` representing an error.
 """
-struct CPyInteger{T<:Integer}
+struct CPyNumber{T<:Number} <: AbstractCPyCallType
     value :: T
 end
-CPyInteger{T}() where {T} = CPyInteger{T}(zero(T) - one(T))
+CPyNumber{T}() where {T} = CPyNumber{T}(zero(T) - one(T))
 
-const CPyInt = CPyInteger{Cint}
-const CPyHashT = CPyInteger{CPy_hash_t}
-const CPySsizeT = CPyInteger{CPy_ssize_t}
+const CPyInt = CPyNumber{Cint}
+const CPyHashT = CPyNumber{CPy_hash_t}
+const CPySsizeT = CPyNumber{CPy_ssize_t}
+const CPyAmbigNumber{T} = CPyAmbigErr{CPyNumber{T}}
 
-iserr(o::CPyInteger) = o.value == (zero(o.value) - one(o.value))
-value(o::CPyInteger) = o.value
+(::Type{T})(x) where {S, T<:CPyAmbigErr{S}} = T(S(x))
+
+iserr(o::CPyNumber) = o.value == (zero(o.value) - one(o.value))
+value(o::CPyNumber) = o.value
 
 """
     CPyVoidInt
 
 Use as a return type in `ccall` for an `Cint` which is only used to indicate error.
 """
-struct CPyVoidInt
+struct CPyVoidInt <: AbstractCPyCallType
     value :: Cint
 end
 CPyVoidInt() = CPyVoidInt(-1)
 
 iserr(o::CPyVoidInt) = o.value == -1
 value(::CPyVoidInt) = nothing
-
-"""
-    CPyNoErr{T}
-
-Use as a return type in `ccall` when the result is never an error.
-"""
-struct CPyNoErr{T}
-    value :: T
-end
-
-iserr(o::CPyNoErr) = false
-value(o::CPyNoErr) = value(o.value)
-
-cpycall_returnhook(o::CPyNoErr) = cpycall_returnhook(o.value)
-
-"""
-    CPyAmbigErr{T}
-
-Use as a return type in `ccall` when the result error value is also a valid return value.
-"""
-struct CPyAmbigErr{T}
-    value :: T
-end
-
-iserr(o::CPyAmbigErr) = iserr(o.value) && pyerror_occurred()
-value(o::CPyAmbigErr) = value(o.value)
-
-cpycall_returnhook(o::CPyAmbigErr) = cpycall_returnhook(o.value)
 
 struct ValueOrError{T}
     iserr :: Bool

@@ -10,20 +10,21 @@ isnull(p) = isnull(ptr(p))
 macro cpycall(ex)
     ex isa Expr && ex.head == :(::) && length(ex.args) == 2 || @goto err
     ex, rettype = ex.args
-    rettype = esc(rettype)
+    rettype = @eval($rettype)
     ex isa Expr && ex.head == :call || @goto err
     fname = esc(ex.args[1])
     args = []
     for ex in ex.args[2:end]
         ex isa Expr && ex.head == :(::) && length(ex.args) == 2 || @goto err
         x, t = ex.args
-        push!(args, (gensym(), gensym(), esc(x), esc(t)))
+        push!(args, (gensym(), gensym(), esc(x), @eval($t)))
     end
     return quote
         let $([:($n = Base.cconvert($t, $x)) for (n,u,x,t) in args]...)
             Base.GC.@preserve $([n for (n,u,x,t) in args]...) begin
                 let $([:($u = Base.unsafe_convert($t, $n)) for (n,u,x,t) in args]...)
-                    a = ccall(($fname, PYLIB), $rettype, ($([t for (n,u,x,t) in args]...),), $([u for (n,u,x,t) in args]...))
+                    a = ccall(($fname, PYLIB), $(cpycall_ctype(rettype)), ($([cpycall_ctype(t) for (n,u,x,t) in args]...),), $([:(cpycall_toc($u)) for (n,u,x,t) in args]...))
+                    a = cpycall_fromc($rettype, a)
                     if iserr(a)
                         $([:(cpycall_errhook($u)) for (n,u,x,t) in args]...)
                     end

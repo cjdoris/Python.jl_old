@@ -14,6 +14,7 @@ unsafe_pytuple_setitem(o, i, v) =
 
 function unsafe_pytuple_fromiter(xs)
     t = unsafe_pytuple_new(length(xs))
+    isnull(t) && return pynull()
     for (i,x) in enumerate(xs)
         iserr(unsafe_pytuple_setitem(t, i-1, x)) && return pynull()
     end
