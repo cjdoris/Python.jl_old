@@ -1,12 +1,14 @@
 module Python
 
-using UnsafePointers, Conda, Libdl, Dates, MacroTools
+using UnsafePointers, Conda, Libdl, Dates, MacroTools, Pkg
 
 include("utils.jl")
 include("init.jl")
 include("consts.jl")
 include("refs.jl")
 # fundamental objects
+include("fundamental.jl")
+include("generate.jl")
 include("object.jl")
 include("type.jl")
 include("error.jl")
@@ -15,6 +17,7 @@ include("none.jl")
 include("import.jl")
 # abstract interfaces
 include("iter.jl")
+include("number.jl")
 # numeric objects
 include("bool.jl")
 include("int.jl")
@@ -34,6 +37,14 @@ include("set.jl")
 include("slice.jl")
 # modules
 include("builtins.jl")
+include("datetime.jl")
+include("fractions.jl")
+# wrapper types providing Julia semantics
+include("converters.jl")
+include("PyDict.jl")
+include("PyList.jl")
+include("PyBuffer.jl")
+include("PyArray.jl")
 # extras
 include("pymacro.jl")
 

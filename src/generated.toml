@@ -1,0 +1,505 @@
+### OBJECT
+
+[pyistrue]
+cfunc = "PyObject_IsTrue O B"
+
+[pynot]
+cfunc = "PyObject_Not O B"
+
+[pyrepr]
+cfunc = "PyObject_Repr O O"
+
+[pyascii]
+cfunc = "PyObject_ASCII O O"
+
+[pydir]
+cfunc = "PyObject_Dir O O"
+
+[pyhasattr]
+cfunc = ["PyObject_HasAttr O O B", "PyObject_HasAttrString O S B"]
+
+[pygetattr]
+cfunc = ["PyObject_GetAttr O O O", "PyObject_GetAttrString O S O"]
+
+[pysetattr]
+cfunc = ["PyObject_SetAttr O O O V", "PyObject_SetAttrString O S O V"]
+
+[pydelattr]
+cfunc = ["PyObject_DelAttr O O V", "PyObject_DelAttrString O S V"]
+
+[pycompare_obj]
+cfunc = "PyObject_RichCompare O O =CPy_CompareOp O"
+export = false
+
+[pycompare]
+cfunc = "PyObject_RichCompareBool O O =CPy_CompareOp B"
+
+[pyissubclass]
+cfunc = "PyObject_IsSubclass O O B"
+
+[pyisinstance]
+cfunc = "PyObject_IsInstance O O B"
+
+[pytypetype]
+cachedobj = {cobj="PyType_Type", type="type"}
+
+[pytype]
+defer = "pytypetype"
+
+[pyobjecttype]
+cachedobj = {cobj="PyBaseObject_Type", type="type"}
+
+[pyobject]
+defer = "pyobjecttype"
+
+[pysupertype]
+cachedobj = {cobj="PySuper_Type", type="type"}
+
+[pysuper]
+defer = "pysupertype"
+
+[pyhash]
+cfunc = "PyObject_Hash O !CPy_hash_t"
+
+[pylen]
+cfunc = "PyObject_Length O !CPy_ssize_t"
+
+[pyiter]
+cfunc = "PyObject_GetIter O O"
+
+[pygetitem]
+cfunc = "PyObject_GetItem O O O"
+
+[pysetitem]
+cfunc = "PyObject_SetItem O O O V"
+
+[pydelitem]
+cfunc = "PyObject_DelItem O O V"
+
+### NONE
+
+[pynone]
+cachedobj = {cobj="_Py_NoneStruct"}
+
+[pynonetype]
+cachedobj = {expr="unsafe_pytype(unsafe_pynone())", type="type"}
+
+### ERRORS
+
+[pyerror_clear]
+cfunc = "PyErr_Clear ==Cvoid"
+unsafe = false
+
+[pyerror_ptr]
+cfunc = "PyErr_Occurred ==Ptr{Cvoid}"
+safe = false
+
+[pyerror_set]
+cfunc = ["PyErr_SetNone ?O ==Cvoid", "PyErr_SetString ?O S ==Cvoid", "PyErr_SetObject ?O ?O ==Cvoid"]
+unsafe = false
+
+[pyerror_givenexceptionmatches]
+cfunc = "PyErr_GivenExceptionMatches ?O ?O =B"
+unsafe = false
+
+### IMPORT
+
+[pyimport]
+cfunc = ["PyImport_ImportModule S O", "PyImport_Import O O"]
+
+### STR
+
+[pystrtype]
+cachedobj = {cobj="PyUnicode_Type", type="type"}
+
+[pystr]
+cfunc = "PyObject_Str O O"
+defer = "pystrtype"
+
+[pystr_asutf8string]
+cfunc = "PyUnicode_AsUTF8String O O"
+safe = false
+
+[pystr_decodeutf8]
+cfunc = "PyUnicode_DecodeUTF8 =Any/Cstring =Any/CPy_ssize_t =Any/Cstring O"
+safe = false
+
+### BYTES
+
+[pybytestype]
+cachedobj = {cobj="PyBytes_Type", type="type"}
+
+[pybytes]
+cfunc = "PyObject_Bytes O O"
+defer = "pybytestype"
+
+### ITER
+
+[pyiter_next]
+cfunc = "PyIter_Next O ?O"
+safe = false
+
+### BOOL
+
+[pybooltype]
+cachedobj = {cobj="PyBool_Type", type="type"}
+
+[pytrue]
+cachedobj = {cobj="_Py_TrueStruct"}
+
+[pyfalse]
+cachedobj = {cobj="_Py_FalseStruct"}
+
+[pybool]
+defer = "pybooltype"
+
+### INT
+
+[pyinttype]
+cachedobj = {cobj="PyLong_Type", type="type"}
+
+[pyint]
+cfunc = "PyNumber_Long O O"
+defer = "pyinttype"
+
+[pyint_fromlonglong]
+cfunc = "PyLong_FromLongLong =Any/Clonglong O"
+safe = false
+
+[pyint_fromulonglong]
+cfunc = "PyLong_FromUnsignedLongLong =Any/Clonglong O"
+safe = false
+
+[pyint_aslonglong]
+cfunc = "PyLong_AsLongLong O ?Clonglong"
+safe = false
+
+[pyint_asulonglong]
+cfunc = "PyLong_AsUnsignedLongLong O ?Culonglong"
+safe = false
+
+### FLOAT
+
+[pyfloattype]
+cachedobj = {cobj="PyFloat_Type", type="type"}
+
+[pyfloat]
+cfunc = ["PyNumber_Float O O", "PyFloat_FromDouble =Real/Cdouble O"]
+defer = "pyfloattype"
+
+[pyfloat_asdouble]
+cfunc = "PyFloat_AsDouble O ?Cdouble"
+safe = false
+
+### COMPLEX
+
+[pycomplextype]
+cachedobj = {cobj="PyComplex_Type", type="type"}
+
+[pycomplex]
+cfunc = "PyComplex_FromDoubles =Real/Cdouble =Real/Cdouble O"
+defer = "pycomplextype"
+
+[pycomplex_realasdouble]
+cfunc = "PyComplex_RealAsDouble O ?Cdouble"
+safe = false
+
+[pycomplex_imagasdouble]
+cfunc = "PyComplex_ImagAsDouble O ?Cdouble"
+safe = false
+
+### TUPLE
+
+[pytupletype]
+cachedobj = {cobj="PyTuple_Type", type="type"}
+
+[pytuple]
+defer = "pytupletype"
+
+[pytuple_new]
+cfunc = "PyTuple_New =Any/CPy_ssize_t O"
+safe = false
+
+[pytuple_setitem]
+cfunc = "PyTuple_SetItem O =Any/CPy_ssize_t !O V"
+safe = false
+
+### LIST
+
+[pylisttype]
+cachedobj = {cobj="PyList_Type", type="type"}
+
+[pylist]
+defer = "pylisttype"
+
+[pylist_new]
+cfunc = "PyList_New =Any/CPy_ssize_t O"
+safe = false
+
+[pylist_append]
+cfunc = "PyList_Append O O V"
+safe = false
+
+### BYTE ARRAY
+
+[pybytearraytype]
+cachedobj = {cobj="PyByteArray_Type", type="type"}
+
+[pybytearray]
+defer = "pybytearray"
+
+### DICT
+
+[pydicttype]
+cachedobj = {cobj="PyDict_Type", type="type"}
+
+[pydict]
+cfunc = "PyDict_New O"
+defer = "pydicttype"
+
+[pydict_setitem]
+cfunc = "PyDict_SetItem O O O V"
+safe = false
+
+[pydict_setitem_string]
+cfunc = "PyDict_SetItemString O S O V"
+safe = false
+
+### SET
+
+[pysettype]
+cachedobj = {cobj="PySet_Type", type="type"}
+
+[pyset]
+defer = "pysettype"
+
+[pyfrozensettype]
+cachedobj = {cobj="PyFrozenSet_Type", type="type"}
+
+[pyfrozenset]
+defer = "pyfrozensettype"
+
+[pyset_new]
+cfunc = "PySet_New =Ptr/Ptr{Cvoid} O"
+safe = false
+
+[pyfrozenset_new]
+cfunc = "PyFrozenSet_New =Ptr/Ptr{Cvoid} O"
+safe = false
+
+[pyset_add]
+cfunc = "PySet_Add O O V"
+safe = false
+
+### SLICE
+
+[pyslicetype]
+cachedobj = {cobj="PySlice_Type", type="type"}
+
+[pyslice]
+defer = "pyslicetype"
+
+### ELLIPSIS
+
+[pyellipsis]
+cachedobj = {cobj="_Py_EllipsisObject"}
+
+[pyellipsistype]
+cachedobj = {expr="unsafe_pytype(unsafe_pyellipsis())", type="type"}
+
+### BUILTINS
+
+[pybuiltinsmodule]
+cachedobj = {expr="pyimport(\"builtins\")"}
+
+[pyrangetype]
+cachedobj = {expr="unsafe_pybuiltin(\"range\")"}
+
+[pyrange]
+defer = "pyrangetype"
+
+[pyhelpfunction]
+cachedobj = {expr="unsafe_pybuiltin(\"help\")"}
+export = false
+
+[pyhelp]
+defer = "pyhelpfunction"
+
+[pyevalfunction]
+cachedobj = {expr="unsafe_pybuiltin(\"eval\")"}
+export = false
+
+[pyeval]
+defer = "pyevalfunction"
+
+[pyexecfunction]
+cachedobj = {expr="unsafe_pybuiltin(\"exec\")"}
+export = false
+
+[pyexec]
+defer = "pyexecfunction"
+
+### DATETIME
+
+[pydatetimemodule]
+cachedobj = {expr="pyimport(\"datetime\")"}
+
+[pydatetype]
+cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"date\")"}
+
+[pydate]
+defer = "pydatetype"
+
+[pytimetype]
+cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"time\")"}
+
+[pytime]
+defer = "pytimetype"
+
+[pydatetimetype]
+cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"datetime\")"}
+
+[pydatetime]
+defer = "pydatetimetype"
+
+[pytimedeltatype]
+cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"timedelta\")"}
+
+[pytimedelta]
+defer = "pytimedeltatype"
+
+[pytzinfotype]
+cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"tzinfo\")"}
+
+[pytzinfo]
+defer = "pytzinfotype"
+
+[pytimezonetype]
+cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"timezone\")"}
+
+[pytimezone]
+defer = "pytimezonetype"
+
+### FRACTIONS
+
+[pyfractionsmodule]
+cachedobj = {expr="pyimport(\"fractions\")"}
+
+[pyfractiontype]
+cachedobj = {expr="unsafe_pygetattr(pyfractionsmodule(), \"Fraction\")"}
+
+[pyfraction]
+defer = "pyfractiontype"
+
+### NUMBERS
+
+[pyadd]
+cfunc = "PyNumber_Add O O O"
+
+[pysub]
+cfunc = "PyNumber_Subtract O O O"
+
+[pymul]
+cfunc = "PyNumber_Multiply O O O"
+
+[pymatmul]
+cfunc = "PyNumber_MatrixMultiply O O O"
+
+[pyfld]
+cfunc = "PyNumber_FloorDivide O O O"
+
+[pydiv]
+cfunc = "PyNumber_TrueDivide O O O"
+
+[pymod]
+cfunc = "PyNumber_Remainder O O O"
+
+[pyfldmod]
+cfunc = "PyNumber_Divmod O O O"
+
+[pypow]
+cfunc = "PyNumber_Power O O O O"
+
+[pyneg]
+cfunc = "PyNumber_Negative O O"
+
+[pypos]
+cfunc = "PyNumber_Positive O O"
+
+[pyabs]
+cfunc = "PyNumber_Absolute O O"
+
+[pyinv]
+cfunc = "PyNumber_Invert O O"
+
+[pylshift]
+cfunc = "PyNumber_Lshift O O O"
+
+[pyrshift]
+cfunc = "PyNumber_Rshift O O O"
+
+[pyand]
+cfunc = "PyNumber_And O O O"
+
+[pyxor]
+cfunc = "PyNumber_Xor O O O"
+
+[pyor]
+cfunc = "PyNumber_Or O O O"
+
+[pyiadd]
+cfunc = "PyNumber_InplaceAdd O O O"
+
+[pyisub]
+cfunc = "PyNumber_InplaceSubtract O O O"
+
+[pyimul]
+cfunc = "PyNumber_InplaceMultiply O O O"
+
+[pyimatmul]
+cfunc = "PyNumber_InplaceMatrixMultiply O O O"
+
+[pyifld]
+cfunc = "PyNumber_InplaceFloorDivide O O O"
+
+[pyidiv]
+cfunc = "PyNumber_InplaceTrueDivide O O O"
+
+[pyimod]
+cfunc = "PyNumber_InplaceRemainder O O O"
+
+[pyifldmod]
+cfunc = "PyNumber_InplaceDivmod O O O"
+
+[pyipow]
+cfunc = "PyNumber_InplacePower O O O O"
+
+[pyineg]
+cfunc = "PyNumber_InplaceNegative O O"
+
+[pyipos]
+cfunc = "PyNumber_InplacePositive O O"
+
+[pyiabs]
+cfunc = "PyNumber_InplaceAbsolute O O"
+
+[pyiinv]
+cfunc = "PyNumber_InplaceInvert O O"
+
+[pyilshift]
+cfunc = "PyNumber_InplaceLshift O O O"
+
+[pyirshift]
+cfunc = "PyNumber_InplaceRshift O O O"
+
+[pyiand]
+cfunc = "PyNumber_InplaceAnd O O O"
+
+[pyixor]
+cfunc = "PyNumber_InplaceXor O O O"
+
+[pyior]
+cfunc = "PyNumber_InplaceOr O O O"
+
+[pyindex]
+cfunc = "PyNumber_Index O O"

@@ -2,7 +2,12 @@ const CPy_hash_t = Cssize_t
 
 const CPy_ssize_t = Cssize_t
 
-# const PtrVoid = Ptr{Cvoid}
+@enum CPy_CompareOp::Cint CPy_LT=0 CPy_LE=1 CPy_EQ=2 CPy_NE=3 CPy_GT=4 CPy_GE=5
+
+Base.@kwdef struct CPy_complex
+    real :: Cdouble = 0
+    imag :: Cdouble = 0
+end
 
 Base.@kwdef struct CPyMethodDefStruct
     name :: Cstring = C_NULL
@@ -158,3 +163,111 @@ const Py_TPFLAGS_TYPE_SUBCLASS        = (0x00000001<<31)
 
 # only use this if we have the stackless extension
 const Py_TPFLAGS_HAVE_STACKLESS_EXTENSION = (0x00000003<<15)
+
+### Objects
+
+abstract type AbstractCPyObject end
+
+"""
+    CPyObject
+
+The layout of the PyObject_HEAD object header.
+"""
+Base.@kwdef struct CPyObject <: AbstractCPyObject
+    # assumes _PyObject_HEAD_EXTRA is empty
+    refcnt :: CPy_ssize_t = 0
+    type :: Ptr{CPyObject} = C_NULL
+end
+
+abstract type AbstractCPyVarObject <: AbstractCPyObject end
+
+"""
+    CPyVarObject
+
+The layout of the PyObject_VAR_HEAD object header.
+"""
+Base.@kwdef struct CPyVarObject <: AbstractCPyVarObject
+    base :: CPyObject = CPyObject()
+    size :: CPy_ssize_t = 0
+end
+
+abstract type AbstractCPyTypeObject <: AbstractCPyVarObject end
+
+"""
+    CPyTypeObject
+
+The common layout of all Python type objects.
+"""
+Base.@kwdef struct CPyTypeObject <: AbstractCPyTypeObject
+    ob_base :: CPyVarObject = CPyVarObject()
+    name :: Cstring = C_NULL
+
+    basicsize :: CPy_ssize_t = 0
+    itemsize :: CPy_ssize_t = 0
+
+    dealloc :: Ptr{Cvoid} = C_NULL
+    vectorcall_offset :: CPy_ssize_t = C_NULL
+    getattr :: Ptr{Cvoid} = C_NULL
+    setattr :: Ptr{Cvoid} = C_NULL
+    as_async :: Ptr{Cvoid} = C_NULL
+    repr :: Ptr{Cvoid} = C_NULL
+
+    as_number :: Ptr{CPyNumberMethodsStruct} = C_NULL
+    as_sequence :: Ptr{CPySequenceMethodsStruct} = C_NULL
+    as_mapping :: Ptr{CPyMappingMethodsStruct} = C_NULL
+
+    hash :: Ptr{Cvoid} = C_NULL
+    call :: Ptr{Cvoid} = C_NULL
+    str :: Ptr{Cvoid} = C_NULL
+    getattro :: Ptr{Cvoid} = C_NULL
+    setattro :: Ptr{Cvoid} = C_NULL
+
+    as_buffer :: Ptr{Cvoid} = C_NULL
+
+    flags :: Culong = 0
+
+    doc :: Cstring = C_NULL
+
+    traverse :: Ptr{Cvoid} = C_NULL
+
+    clear :: Ptr{Cvoid} = C_NULL
+
+    richcompare :: Ptr{Cvoid} = C_NULL
+
+    weaklistoffset :: CPy_ssize_t = 0
+
+    iter :: Ptr{Cvoid} = C_NULL
+    iternext :: Ptr{Cvoid} = C_NULL
+
+    methods :: Ptr{CPyMethodDefStruct} = C_NULL
+    members :: Ptr{CPyMemberDefStruct} = C_NULL
+    getset :: Ptr{CPyGetSetDefStruct} = C_NULL
+    base :: Ptr{CPyObject} = C_NULL
+    dict :: Ptr{CPyObject} = C_NULL
+    descr_get :: Ptr{Cvoid} = C_NULL
+    descr_set :: Ptr{Cvoid} = C_NULL
+    dictoffset :: CPy_ssize_t = 0
+    init :: Ptr{Cvoid} = C_NULL
+    alloc :: Ptr{Cvoid} = C_NULL
+    new :: Ptr{Cvoid} = C_NULL
+    free :: Ptr{Cvoid} = C_NULL
+    is_gc :: Ptr{Cvoid} = C_NULL
+    bases :: Ptr{CPyObject} = C_NULL
+    mro :: Ptr{CPyObject} = C_NULL
+    cache :: Ptr{CPyObject} = C_NULL
+    subclasses :: Ptr{CPyObject} = C_NULL
+    weaklist :: Ptr{CPyObject} = C_NULL
+    del :: Ptr{Cvoid} = C_NULL
+
+    version_tag :: Cuint = 0
+
+    finalize :: Ptr{Cvoid} = C_NULL
+    vectorcall :: Ptr{Cvoid} = C_NULL
+end
+
+abstract type AbstractCPyComplexObject <: AbstractCPyObject end
+
+Base.@kwdef struct CPyComplexObject <: AbstractCPyComplexObject
+    base :: CPyObject
+    value :: CPy_complex
+end
