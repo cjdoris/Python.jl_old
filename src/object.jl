@@ -94,12 +94,15 @@ Base.getproperty(o::PyObject, a::Symbol) =
 _getproperty(o, ::Val{a}) where {a} =
     pygetattr(o, a)
 
-_getproperty(o, ::Val{Symbol("b!")}) = pyistrue(o)
-_getproperty(o, ::Val{Symbol("s!")}) = pystr(String, o)
-_getproperty(o, ::Val{Symbol("r!")}) = pyrepr(String, o)
-_getproperty(o, ::Val{Symbol("i!")}) = pyint_convert(Int, pyint(o))
-_getproperty(o, ::Val{Symbol("u!")}) = pyint_convert(UInt, pyint(o))
-_getproperty(o, ::Val{Symbol("f!")}) = pyfloat_convert(Float64, pyfloat(o))
+_getproperty(o, ::Val{Symbol("jl!b")}) = pytruth(o)
+_getproperty(o, ::Val{Symbol("jl!s")}) = pystr(String, o)
+_getproperty(o, ::Val{Symbol("jl!r")}) = pyrepr(String, o)
+_getproperty(o, ::Val{Symbol("jl!i")}) = pyint_convert(Int, pyint(o))
+_getproperty(o, ::Val{Symbol("jl!u")}) = pyint_convert(UInt, pyint(o))
+_getproperty(o, ::Val{Symbol("jl!f")}) = pyfloat_convert(Float64, pyfloat(o))
+_getproperty(o, ::Val{Symbol("jl!list")}) = (args...)->PyList(args..., o)
+_getproperty(o, ::Val{Symbol("jl!dict")}) = (args...)->PyDict(args..., o)
+_getproperty(o, ::Val{Symbol("jl!array")}) = (args...)->PyArray(args..., o)
 
 Base.setproperty!(o::PyObject, a::Symbol, v) =
     pysetattr(o, a, v)

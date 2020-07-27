@@ -39,11 +39,12 @@ include("slice.jl")
 include("builtins.jl")
 include("datetime.jl")
 include("fractions.jl")
-# wrapper types providing Julia semantics
+# wrapper type providing Python object around a Julia value
+include("jlobject.jl")
+# wrapper types providing Julia semantics around Python objects
 include("converters.jl")
 include("PyDict.jl")
 include("PyList.jl")
-include("PyBuffer.jl")
 include("PyArray.jl")
 # extras
 include("pymacro.jl")

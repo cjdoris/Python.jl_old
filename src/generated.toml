@@ -1,6 +1,6 @@
 ### OBJECT
 
-[pyistrue]
+[pytruth]
 cfunc = "PyObject_IsTrue O B"
 
 [pynot]
@@ -405,16 +405,16 @@ cfunc = "PyNumber_Multiply O O O"
 [pymatmul]
 cfunc = "PyNumber_MatrixMultiply O O O"
 
-[pyfld]
+[pyfloordiv]
 cfunc = "PyNumber_FloorDivide O O O"
 
-[pydiv]
+[pytruediv]
 cfunc = "PyNumber_TrueDivide O O O"
 
 [pymod]
 cfunc = "PyNumber_Remainder O O O"
 
-[pyfldmod]
+[pydivmod]
 cfunc = "PyNumber_Divmod O O O"
 
 [pypow]
@@ -459,16 +459,16 @@ cfunc = "PyNumber_InplaceMultiply O O O"
 [pyimatmul]
 cfunc = "PyNumber_InplaceMatrixMultiply O O O"
 
-[pyifld]
+[pyifloordiv]
 cfunc = "PyNumber_InplaceFloorDivide O O O"
 
-[pyidiv]
+[pyitruediv]
 cfunc = "PyNumber_InplaceTrueDivide O O O"
 
 [pyimod]
 cfunc = "PyNumber_InplaceRemainder O O O"
 
-[pyifldmod]
+[pyidivmod]
 cfunc = "PyNumber_InplaceDivmod O O O"
 
 [pyipow]

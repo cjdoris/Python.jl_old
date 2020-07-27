@@ -264,6 +264,28 @@ pybytes(args...; kwargs...) = safe(unsafe_pybytes(args...; kwargs...))
 export pybytes
 
 
+function unsafe_pytruediv(x1::Any, x2::Any)
+    if !(x1 isa PyObject)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    if !(x2 isa PyObject)
+        x2 = unsafe_pyobj(x2)
+        isnull(x2) && return PYNULL
+    end
+
+    r = ccall((:PyNumber_TrueDivide, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyObjRef(r, false))
+    end
+end
+pytruediv(args...; kwargs...) = safe(unsafe_pytruediv(args...; kwargs...))
+export pytruediv
+
+
 function unsafe_pyilshift(x1::Any, x2::Any)
     if !(x1 isa PyObject)
         x1 = unsafe_pyobj(x1)
@@ -431,28 +453,6 @@ pystrtype(args...; kwargs...) = safe(unsafe_pystrtype(args...; kwargs...))
 export pystrtype
 
 
-function unsafe_pyfld(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
-        x1 = unsafe_pyobj(x1)
-        isnull(x1) && return PYNULL
-    end
-
-    if !(x2 isa PyObject)
-        x2 = unsafe_pyobj(x2)
-        isnull(x2) && return PYNULL
-    end
-
-    r = ccall((:PyNumber_FloorDivide, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
-    if r == C_NULL
-        return PYNULL
-    else
-        return unsafe_pyobj(PyObjRef(r, false))
-    end
-end
-pyfld(args...; kwargs...) = safe(unsafe_pyfld(args...; kwargs...))
-export pyfld
-
-
 function unsafe_pyirshift(x1::Any, x2::Any)
     if !(x1 isa PyObject)
         x1 = unsafe_pyobj(x1)
@@ -475,17 +475,7 @@ pyirshift(args...; kwargs...) = safe(unsafe_pyirshift(args...; kwargs...))
 export pyirshift
 
 
-function unsafe_pystr_decodeutf8(x1::Any, x2::Any, x3::Any)
-    r = ccall((:PyUnicode_DecodeUTF8, PYLIB), Ptr{Cvoid}, (Cstring, CPy_ssize_t, Cstring), x1, x2, x3)
-    if r == C_NULL
-        return PYNULL
-    else
-        return unsafe_pyobj(PyObjRef(r, false))
-    end
-end
-
-
-function unsafe_pyfldmod(x1::Any, x2::Any)
+function unsafe_pyifloordiv(x1::Any, x2::Any)
     if !(x1 isa PyObject)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
@@ -496,15 +486,25 @@ function unsafe_pyfldmod(x1::Any, x2::Any)
         isnull(x2) && return PYNULL
     end
 
-    r = ccall((:PyNumber_Divmod, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    r = ccall((:PyNumber_InplaceFloorDivide, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
     if r == C_NULL
         return PYNULL
     else
         return unsafe_pyobj(PyObjRef(r, false))
     end
 end
-pyfldmod(args...; kwargs...) = safe(unsafe_pyfldmod(args...; kwargs...))
-export pyfldmod
+pyifloordiv(args...; kwargs...) = safe(unsafe_pyifloordiv(args...; kwargs...))
+export pyifloordiv
+
+
+function unsafe_pystr_decodeutf8(x1::Any, x2::Any, x3::Any)
+    r = ccall((:PyUnicode_DecodeUTF8, PYLIB), Ptr{Cvoid}, (Cstring, CPy_ssize_t, Cstring), x1, x2, x3)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyObjRef(r, false))
+    end
+end
 
 
 function unsafe_pyisub(x1::Any, x2::Any)
@@ -581,6 +581,28 @@ function unsafe_pylist_new(x1::Any)
         return unsafe_pyobj(PyObjRef(r, false))
     end
 end
+
+
+function unsafe_pyidivmod(x1::Any, x2::Any)
+    if !(x1 isa PyObject)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    if !(x2 isa PyObject)
+        x2 = unsafe_pyobj(x2)
+        isnull(x2) && return PYNULL
+    end
+
+    r = ccall((:PyNumber_InplaceDivmod, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyObjRef(r, false))
+    end
+end
+pyidivmod(args...; kwargs...) = safe(unsafe_pyidivmod(args...; kwargs...))
+export pyidivmod
 
 
 function unsafe_pycompare(x1::Any, x2::Any, x3::CPy_CompareOp)
@@ -783,28 +805,6 @@ pymul(args...; kwargs...) = safe(unsafe_pymul(args...; kwargs...))
 export pymul
 
 
-function unsafe_pydiv(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
-        x1 = unsafe_pyobj(x1)
-        isnull(x1) && return PYNULL
-    end
-
-    if !(x2 isa PyObject)
-        x2 = unsafe_pyobj(x2)
-        isnull(x2) && return PYNULL
-    end
-
-    r = ccall((:PyNumber_TrueDivide, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
-    if r == C_NULL
-        return PYNULL
-    else
-        return unsafe_pyobj(PyObjRef(r, false))
-    end
-end
-pydiv(args...; kwargs...) = safe(unsafe_pydiv(args...; kwargs...))
-export pydiv
-
-
 function unsafe_pyipos(x1::Any)
     if !(x1 isa PyObject)
         x1 = unsafe_pyobj(x1)
@@ -826,6 +826,28 @@ const _pytypetype = pynulltype()
 unsafe_pytypetype() = unsafe_cacheget!(_pytypetype) do; cglobal((:PyType_Type, PYLIB), CPyObject); end
 pytypetype(args...; kwargs...) = safe(unsafe_pytypetype(args...; kwargs...))
 export pytypetype
+
+
+function unsafe_pyitruediv(x1::Any, x2::Any)
+    if !(x1 isa PyObject)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    if !(x2 isa PyObject)
+        x2 = unsafe_pyobj(x2)
+        isnull(x2) && return PYNULL
+    end
+
+    r = ccall((:PyNumber_InplaceTrueDivide, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyObjRef(r, false))
+    end
+end
+pyitruediv(args...; kwargs...) = safe(unsafe_pyitruediv(args...; kwargs...))
+export pyitruediv
 
 
 function unsafe_pyhasattr(x1::Any, x2::Any)
@@ -974,26 +996,21 @@ unsafe_pyevalfunction() = unsafe_cacheget!(_pyevalfunction) do; unsafe_pybuiltin
 pyevalfunction(args...; kwargs...) = safe(unsafe_pyevalfunction(args...; kwargs...))
 
 
-function unsafe_pyifldmod(x1::Any, x2::Any)
+function unsafe_pyiinv(x1::Any)
     if !(x1 isa PyObject)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
-        x2 = unsafe_pyobj(x2)
-        isnull(x2) && return PYNULL
-    end
-
-    r = ccall((:PyNumber_InplaceDivmod, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    r = ccall((:PyNumber_InplaceInvert, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid},), x1)
     if r == C_NULL
         return PYNULL
     else
         return unsafe_pyobj(PyObjRef(r, false))
     end
 end
-pyifldmod(args...; kwargs...) = safe(unsafe_pyifldmod(args...; kwargs...))
-export pyifldmod
+pyiinv(args...; kwargs...) = safe(unsafe_pyiinv(args...; kwargs...))
+export pyiinv
 
 
 const _pyfrozensettype = pynulltype()
@@ -1022,23 +1039,6 @@ function unsafe_pyadd(x1::Any, x2::Any)
 end
 pyadd(args...; kwargs...) = safe(unsafe_pyadd(args...; kwargs...))
 export pyadd
-
-
-function unsafe_pyiinv(x1::Any)
-    if !(x1 isa PyObject)
-        x1 = unsafe_pyobj(x1)
-        isnull(x1) && return PYNULL
-    end
-
-    r = ccall((:PyNumber_InplaceInvert, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid},), x1)
-    if r == C_NULL
-        return PYNULL
-    else
-        return unsafe_pyobj(PyObjRef(r, false))
-    end
-end
-pyiinv(args...; kwargs...) = safe(unsafe_pyiinv(args...; kwargs...))
-export pyiinv
 
 
 function unsafe_pycomplex_imagasdouble(x1::Any)
@@ -1219,6 +1219,28 @@ pybytearraytype(args...; kwargs...) = safe(unsafe_pybytearraytype(args...; kwarg
 export pybytearraytype
 
 
+function unsafe_pydivmod(x1::Any, x2::Any)
+    if !(x1 isa PyObject)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    if !(x2 isa PyObject)
+        x2 = unsafe_pyobj(x2)
+        isnull(x2) && return PYNULL
+    end
+
+    r = ccall((:PyNumber_Divmod, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyObjRef(r, false))
+    end
+end
+pydivmod(args...; kwargs...) = safe(unsafe_pydivmod(args...; kwargs...))
+export pydivmod
+
+
 function unsafe_pyneg(x1::Any)
     if !(x1 isa PyObject)
         x1 = unsafe_pyobj(x1)
@@ -1234,28 +1256,6 @@ function unsafe_pyneg(x1::Any)
 end
 pyneg(args...; kwargs...) = safe(unsafe_pyneg(args...; kwargs...))
 export pyneg
-
-
-function unsafe_pyor(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
-        x1 = unsafe_pyobj(x1)
-        isnull(x1) && return PYNULL
-    end
-
-    if !(x2 isa PyObject)
-        x2 = unsafe_pyobj(x2)
-        isnull(x2) && return PYNULL
-    end
-
-    r = ccall((:PyNumber_Or, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
-    if r == C_NULL
-        return PYNULL
-    else
-        return unsafe_pyobj(PyObjRef(r, false))
-    end
-end
-pyor(args...; kwargs...) = safe(unsafe_pyor(args...; kwargs...))
-export pyor
 
 
 function unsafe_pygetitem(x1::Any, x2::Any)
@@ -1278,6 +1278,28 @@ function unsafe_pygetitem(x1::Any, x2::Any)
 end
 pygetitem(args...; kwargs...) = safe(unsafe_pygetitem(args...; kwargs...))
 export pygetitem
+
+
+function unsafe_pyor(x1::Any, x2::Any)
+    if !(x1 isa PyObject)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    if !(x2 isa PyObject)
+        x2 = unsafe_pyobj(x2)
+        isnull(x2) && return PYNULL
+    end
+
+    r = ccall((:PyNumber_Or, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyObjRef(r, false))
+    end
+end
+pyor(args...; kwargs...) = safe(unsafe_pyor(args...; kwargs...))
+export pyor
 
 
 function unsafe_pyindex(x1::Any)
@@ -1325,6 +1347,28 @@ function unsafe_pyint_aslonglong(x1::Any)
         return ValueOrError{Clonglong}(r)
     end
 end
+
+
+function unsafe_pyfloordiv(x1::Any, x2::Any)
+    if !(x1 isa PyObject)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    if !(x2 isa PyObject)
+        x2 = unsafe_pyobj(x2)
+        isnull(x2) && return PYNULL
+    end
+
+    r = ccall((:PyNumber_FloorDivide, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyObjRef(r, false))
+    end
+end
+pyfloordiv(args...; kwargs...) = safe(unsafe_pyfloordiv(args...; kwargs...))
+export pyfloordiv
 
 
 function unsafe_pyhash(x1::Any)
@@ -1385,28 +1429,6 @@ function unsafe_pyissubclass(x1::Any, x2::Any)
 end
 pyissubclass(args...; kwargs...) = safe(unsafe_pyissubclass(args...; kwargs...))
 export pyissubclass
-
-
-function unsafe_pyidiv(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
-        x1 = unsafe_pyobj(x1)
-        isnull(x1) && return PYNULL
-    end
-
-    if !(x2 isa PyObject)
-        x2 = unsafe_pyobj(x2)
-        isnull(x2) && return PYNULL
-    end
-
-    r = ccall((:PyNumber_InplaceTrueDivide, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
-    if r == C_NULL
-        return PYNULL
-    else
-        return unsafe_pyobj(PyObjRef(r, false))
-    end
-end
-pyidiv(args...; kwargs...) = safe(unsafe_pyidiv(args...; kwargs...))
-export pyidiv
 
 
 const _pyrangetype = pynull()
@@ -1492,6 +1514,23 @@ end
 unsafe_pyfloat(args...; kwargs...) = unsafe_pycall_args(unsafe_pyfloattype(), args, kwargs)
 pyfloat(args...; kwargs...) = safe(unsafe_pyfloat(args...; kwargs...))
 export pyfloat
+
+
+function unsafe_pytruth(x1::Any)
+    if !(x1 isa PyObject)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return ValueOrError{Bool}()
+    end
+
+    r = ccall((:PyObject_IsTrue, PYLIB), Cint, (Ptr{Cvoid},), x1)
+    if r == -1
+        return ValueOrError{Bool}()
+    else
+        return ValueOrError{Bool}(r != 0)
+    end
+end
+pytruth(args...; kwargs...) = safe(unsafe_pytruth(args...; kwargs...))
+export pytruth
 
 
 unsafe_pyobject(args...; kwargs...) = unsafe_pycall_args(unsafe_pyobjecttype(), args, kwargs)
@@ -1600,23 +1639,6 @@ pyfractiontype(args...; kwargs...) = safe(unsafe_pyfractiontype(args...; kwargs.
 export pyfractiontype
 
 
-function unsafe_pyistrue(x1::Any)
-    if !(x1 isa PyObject)
-        x1 = unsafe_pyobj(x1)
-        isnull(x1) && return ValueOrError{Bool}()
-    end
-
-    r = ccall((:PyObject_IsTrue, PYLIB), Cint, (Ptr{Cvoid},), x1)
-    if r == -1
-        return ValueOrError{Bool}()
-    else
-        return ValueOrError{Bool}(r != 0)
-    end
-end
-pyistrue(args...; kwargs...) = safe(unsafe_pyistrue(args...; kwargs...))
-export pyistrue
-
-
 function unsafe_pyrshift(x1::Any, x2::Any)
     if !(x1 isa PyObject)
         x1 = unsafe_pyobj(x1)
@@ -1661,7 +1683,7 @@ pyimod(args...; kwargs...) = safe(unsafe_pyimod(args...; kwargs...))
 export pyimod
 
 
-function unsafe_pyifld(x1::Any, x2::Any)
+function unsafe_pyipow(x1::Any, x2::Any, x3::Any)
     if !(x1 isa PyObject)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
@@ -1672,15 +1694,20 @@ function unsafe_pyifld(x1::Any, x2::Any)
         isnull(x2) && return PYNULL
     end
 
-    r = ccall((:PyNumber_InplaceFloorDivide, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if !(x3 isa PyObject)
+        x3 = unsafe_pyobj(x3)
+        isnull(x3) && return PYNULL
+    end
+
+    r = ccall((:PyNumber_InplacePower, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), x1, x2, x3)
     if r == C_NULL
         return PYNULL
     else
         return unsafe_pyobj(PyObjRef(r, false))
     end
 end
-pyifld(args...; kwargs...) = safe(unsafe_pyifld(args...; kwargs...))
-export pyifld
+pyipow(args...; kwargs...) = safe(unsafe_pyipow(args...; kwargs...))
+export pyipow
 
 
 function unsafe_pylen(x1::Any)
@@ -1743,31 +1770,21 @@ pyimul(args...; kwargs...) = safe(unsafe_pyimul(args...; kwargs...))
 export pyimul
 
 
-function unsafe_pyipow(x1::Any, x2::Any, x3::Any)
+function unsafe_pyineg(x1::Any)
     if !(x1 isa PyObject)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
-        x2 = unsafe_pyobj(x2)
-        isnull(x2) && return PYNULL
-    end
-
-    if !(x3 isa PyObject)
-        x3 = unsafe_pyobj(x3)
-        isnull(x3) && return PYNULL
-    end
-
-    r = ccall((:PyNumber_InplacePower, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), x1, x2, x3)
+    r = ccall((:PyNumber_InplaceNegative, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid},), x1)
     if r == C_NULL
         return PYNULL
     else
         return unsafe_pyobj(PyObjRef(r, false))
     end
 end
-pyipow(args...; kwargs...) = safe(unsafe_pyipow(args...; kwargs...))
-export pyipow
+pyineg(args...; kwargs...) = safe(unsafe_pyineg(args...; kwargs...))
+export pyineg
 
 
 function unsafe_pyimatmul(x1::Any, x2::Any)
@@ -1827,23 +1844,6 @@ function unsafe_pyiadd(x1::Any, x2::Any)
 end
 pyiadd(args...; kwargs...) = safe(unsafe_pyiadd(args...; kwargs...))
 export pyiadd
-
-
-function unsafe_pyineg(x1::Any)
-    if !(x1 isa PyObject)
-        x1 = unsafe_pyobj(x1)
-        isnull(x1) && return PYNULL
-    end
-
-    r = ccall((:PyNumber_InplaceNegative, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid},), x1)
-    if r == C_NULL
-        return PYNULL
-    else
-        return unsafe_pyobj(PyObjRef(r, false))
-    end
-end
-pyineg(args...; kwargs...) = safe(unsafe_pyineg(args...; kwargs...))
-export pyineg
 
 
 unsafe_pybool(args...; kwargs...) = unsafe_pycall_args(unsafe_pybooltype(), args, kwargs)
