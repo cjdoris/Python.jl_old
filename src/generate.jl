@@ -22,12 +22,12 @@ open(GEN_JL, "w") do io
                 crettype = "Ptr{Cvoid}"
                 iserr = "r == C_NULL"
                 errval = "PYNULL"
-                retval = "unsafe_pyobj(PyObjRef(r, false))"
+                retval = "unsafe_pyobj(PyRef(r, false))"
             elseif ret == "?O"
                 crettype = "Ptr{Cvoid}"
                 iserr = "(r == C_NULL) && pyerror_occurred()"
                 errval = "PYNULL"
-                retval = "unsafe_pyobj(PyObjRef(r, false))"
+                retval = "unsafe_pyobj(PyRef(r, false))"
             elseif ret == "B"
                 crettype = "Cint"
                 iserr = "r == -1"
@@ -81,7 +81,7 @@ open(GEN_JL, "w") do io
                     argtype = "Any"
                     cargtype = "Ptr{Cvoid}"
                     push!(pre, """
-                        if !($argname isa PyObject)
+                        if !isa($argname, AbstractPyRef)
                             $argname = unsafe_pyobj($argname)
                             isnull($argname) && return $errval
                         end
@@ -92,7 +92,7 @@ open(GEN_JL, "w") do io
                     argtype = "Any"
                     cargtype = "Ptr{Cvoid}"
                     push!(pre, """
-                        if !($argname isa PyObject)
+                        if !isa($argname, AbstractPyRef)
                             $argname = unsafe_pyobj($argname)
                             isnull($argname) && return $errval
                         end
@@ -104,7 +104,11 @@ open(GEN_JL, "w") do io
                     # NULL is ok
                     argtype = "Any"
                     cargtype = "Ptr{Cvoid}"
-                    push!(pre, """    $argname = unsafe_pyobj($argname)""")
+                    push!(pre, """
+                        if !isa($argname, AbstractPyRef)
+                            $argname = unsafe_pyobj($argname)
+                        end
+                    """)
                 elseif arg == "S"
                     # AbstractString -> Cstring
                     argtype = "AbstractString"
@@ -152,17 +156,16 @@ open(GEN_JL, "w") do io
         cobj = get(data, "cachedobj", nothing)
         if cobj !== nothing
             _name = "_$name"
-            tp = get(cobj, "type", "object")
             if haskey(cobj, "expr")
                 ex = cobj["expr"]
             elseif haskey(cobj, "cobj")
                 ex = """cglobal((:$(cobj["cobj"]), PYLIB), CPyObject)"""
             elseif haskey(cobj, "cobjptr")
-                ex = """unsafe_load(cglobal((:$(cobj["cobj"]), PYLIB), Ptr{CPyObject}))"""
+                ex = """unsafe_load(cglobal((:$(cobj["cobj"]), PYLIB), PyPtr))"""
             else
                 error("cachedobj has no defining info")
             end
-            println(io, """const $_name = pynull$(tp=="object" ? "" : tp)()""")
+            println(io, """const $_name = pynull()""")
             println(io, "$uname() = unsafe_cacheget!($_name) do; $ex; end")
         end
 
@@ -197,7 +200,7 @@ open(GEN_JL, "w") do io
         setname = "pyerror_set_$name"
         occname = "pyerror_occurred_$name"
         println(io, "const $_tname = pynull()")
-        println(io, "$utname() = unsafe_cacheget!($_tname) do; unsafe_load(cglobal((:$cname, PYLIB), Ptr{CPyObject})); end")
+        println(io, "$utname() = unsafe_cacheget!($_tname) do; unsafe_load(cglobal((:$cname, PYLIB), PyPtr)); end")
         println(io, "$tname(args...; kwargs...) = safe($utname(args...; kwargs...))")
         println(io, "export $tname")
         println(io)

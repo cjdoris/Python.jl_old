@@ -7,7 +7,7 @@ A Julia vector wrapping the Python list `o` (or anything satisfying the sequence
 """
 struct PyList{T, TC<:AbstractPyConverter{T}} <: AbstractVector{T}
     elconverter :: TC
-    parent :: ConcretePyObject
+    parent :: PyObject
 end
 PyList(T=PyObject, o::PyObject=pylist()) = PyList(AbstractPyConverter(T), o)
 PyList(o::PyObject) = PyList(PyObject, o)

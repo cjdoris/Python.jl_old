@@ -5,7 +5,7 @@ for T in [Int8, Int16, Int32, Int64, Int128, UInt8, UInt16, UInt32, UInt64, UInt
     ctype = u ? Culonglong : Clonglong
     if sizeof(T) ≤ sizeof(Clonglong)
         @eval unsafe_pyint(x::$T) = $fromfunc(x)
-        @eval function unsafe_pyint_convert(::Type{$T}, o::PyObject)
+        @eval function unsafe_pyint_convert(::Type{$T}, o::AbstractPyRef)
             R = ValueOrError{$T}
             r = $asfunc(o)
             if iserr(r)
@@ -29,7 +29,7 @@ end
 unsafe_pyint(x::Integer) = unsafe_pyint(convert(BigInt, x))
 unsafe_pyint(x::BigInt) = unsafe_pyint(string(x))
 
-function unsafe_pyint_convert(::Type{T}, o::PyObject) where {T<:Integer}
+function unsafe_pyint_convert(::Type{T}, o::AbstractPyRef) where {T<:Integer}
     x = unsafe_pyint_convert(BigInt, o)
     R = ValueOrError{T}
     if iserr(x)
@@ -38,7 +38,7 @@ function unsafe_pyint_convert(::Type{T}, o::PyObject) where {T<:Integer}
         return R(convert(T, value(x)))
     end
 end
-function unsafe_pyint_convert(::Type{BigInt}, o::PyObject)
+function unsafe_pyint_convert(::Type{BigInt}, o::AbstractPyRef)
     x = unsafe_pystr(String, o)
     R = ValueOrError{BigInt}
     if iserr(x)
@@ -47,7 +47,7 @@ function unsafe_pyint_convert(::Type{BigInt}, o::PyObject)
         return R(parse(BigInt, value(x)))
     end
 end
-function unsafe_pyint_convert(::Type{T}, o::PyObject) where {T<:Number}
+function unsafe_pyint_convert(::Type{T}, o::AbstractPyRef) where {T<:Number}
     R = ValueOrError{T}
     x = unsafe_pyint_convert(Int, o)
     if !iserr(x)

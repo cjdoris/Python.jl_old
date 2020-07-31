@@ -2,14 +2,14 @@ abstract type AbstractCPySliceObject <: AbstractCPyObject end
 
 Base.@kwdef struct CPySliceObject <: AbstractCPySliceObject
     base :: CPyObject = CPyObject()
-    start :: Ptr{CPyObject} = C_NULL
-    stop :: Ptr{CPyObject} = C_NULL
-    step :: Ptr{CPyObject} = C_NULL
+    start :: PyPtr = C_NULL
+    stop :: PyPtr = C_NULL
+    step :: PyPtr = C_NULL
 end
 
 unsafe_pyslice_start(o::PyObject) =
-    isnull(o) ? PYNULL : unsafe_pyobj(PyObjRef(uptr(CPySliceObject, o).start[], true))
+    isnull(o) ? PYNULL : unsafe_pyobj(PyRef(uptr(CPySliceObject, o).start[], true))
 unsafe_pyslice_stop(o::PyObject) =
-    isnull(o) ? PYNULL : unsafe_pyobj(PyObjRef(uptr(CPySliceObject, o).stop[], true))
+    isnull(o) ? PYNULL : unsafe_pyobj(PyRef(uptr(CPySliceObject, o).stop[], true))
 unsafe_pyslice_step(o::PyObject) =
-    isnull(o) ? PYNULL : unsafe_pyobj(PyObjRef(uptr(CPySliceObject, o).step[], true))
+    isnull(o) ? PYNULL : unsafe_pyobj(PyRef(uptr(CPySliceObject, o).step[], true))

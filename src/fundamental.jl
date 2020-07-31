@@ -1,53 +1,49 @@
-### PyObject
+### AbstractPyObject
+# Abstract type for Python objects with Python semantics.
+# They must have a `ref` field containing a `PyRef`.
+# Currently there is only one subtype, `PyObject`, but other subtypes could
+# implement other functionality, such as:
+# - keeping track of the Python type
+# - having conversion policies different from the default (e.g. prefer numpy types)
 
-struct PyObject{T<:AbstractCPyObject}
-    ref :: PyObjRef
-    function PyObject{T}(ref::PyObjRef, check::Bool=true) where {T<:AbstractCPyObject}
-        check && isnull(ref) && pythrow()
-        new{T}(ref)
-    end
-end
-export PyObject
+abstract type AbstractPyObject{T} <: AbstractPyRef{T} end
 
-const ConcretePyObject = PyObject{CPyObject}
+PyRef(o::AbstractPyObject) = getfield(o, :ref)
+ptr(o::AbstractPyObject) = ptr(PyRef(o))
 
-PyObjRef(o::PyObject) = getfield(o, :ref)
-
-Base.cconvert(::Type{<:Ptr}, o::PyObject) = PyObjRef(o)
-
-ptr(o::PyObject) = ptr(PyObjRef(o))
-
-refcnt(o::PyObject) = refcnt(PyObjRef(o))
-
-pynull(::Type{T}=CPyObject) where {T<:AbstractCPyObject} = PyObject{T}(PyObjRef(), false)
-
-iserr(o::PyObject) = isnull(o)
-
-pynulltype() = pynull(CPyTypeObject)
-
-const PYNULL = pynull()
-const PYNULLTYPE = pynulltype()
-
-function unsafe_cacheget!(f, o::PyObject)
+function unsafe_cacheget!(f, o::AbstractPyObject)
     if isnull(o)
         p = f()
-        setptr!(PyObjRef(o), ptr(p), true)
+        setptr!(PyRef(o), ptr(p), true)
     end
     return o
 end
 
-safe(o::PyObject) = isnull(o) ? pythrow() : o
+### PyObject
+
+struct PyObject <: AbstractPyObject{CPyObject}
+    ref :: PyRef
+    function PyObject(ref::PyRef, check::Bool=true)
+        check && isnull(ref) && pythrow()
+        new(ref)
+    end
+end
+export PyObject
+
+pynull() = PyObject(PyRef(), false)
+
+const PYNULL = pynull()
+
+
 
 ### DEFAULT CONVERSION
 
 const PyFloatLike = Union{Float16,Float32,Float64}
 const PyComplexLike = Complex{T} where {T<:PyFloatLike}
 
-unsafe_pyobj(T::Type, o::PyObjRef) = PyObject{T}(PyObjRef(o), false)
-unsafe_pyobj(T::Type, o) = unsafe_pyobj(T, unsafe_pyobj(o))
-
-unsafe_pyobj(o::PyObjRef) = unsafe_pyobj(CPyObject, o)
 unsafe_pyobj(o::PyObject) = o
+unsafe_pyobj(o::PyRef) = PyObject(o, false)
+unsafe_pyobj(o::AbstractPyRef) = unsafe_pyobj(PyRef(o))
 unsafe_pyobj(o::Nothing) = unsafe_pynone()
 unsafe_pyobj(o::Bool) = unsafe_pybool(o)
 unsafe_pyobj(o::AbstractString) = unsafe_pystr(o)
@@ -59,11 +55,10 @@ unsafe_pyobj(o::AbstractRange{<:Integer}) = unsafe_pyrange(o)
 unsafe_pyobj(o::Time) = unsafe_pytime(o)
 unsafe_pyobj(o::Date) = unsafe_pydate(o)
 unsafe_pyobj(o::DateTime) = unsafe_pydatetime(o)
+unsafe_pyobj(o) = unsafe_pyjulia(o)
 
 PyObject(o::PyObject) = o
 PyObject(o) = safe(unsafe_pyobj(o))
 
-Base.convert(::Type{T}, o::PyObject) where {T<:PyObject} = T(PyObjRef(o), false)
-Base.convert(::Type{T}, o::T) where {T<:PyObject} = o
 Base.convert(::Type{PyObject}, o::PyObject) = o
-Base.convert(::Type{T}, o) where {T<:PyObject} = Base.convert(T, PyObject(o))
+Base.convert(::Type{PyObject}, o) = PyObject(o)

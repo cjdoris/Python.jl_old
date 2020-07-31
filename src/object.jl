@@ -57,16 +57,136 @@ function unsafe_pycall_args(func, args, kwargs=())
     end
     r = ccall((:PyObject_Call, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), f, a, k)
     isnull(r) && return PYNULL
-    return unsafe_pyobj(PyObjRef(r, false))
+    return unsafe_pyobj(PyRef(r, false))
 end
 pycall_args(func, args, kwargs=()) =
     safe(unsafe_pycall_args(func, args, kwargs))
 
 unsafe_pycall(func, args...; kwargs...) =
-    unsafe_pycall(func, args, kwargs)
+    unsafe_pycall_args(func, args, kwargs)
 pycall(func, args...; kwargs...) =
     safe(unsafe_pycall_args(func, args, kwargs))
 export pycall
+
+### CONVERSION
+
+unsafe_pyconvert_quick(::Type{T}, o) where {T} = unsafe_pyconvert_quick(T, T, o)
+function unsafe_pyconvert_quick(::Type{T}, ::Type{S}, o) where {T, S}
+    r = unsafe_pyconvert_quick_rule(T, S, o) :: ValueOrNothingOrError{T}
+    if S===Any || r.iserr || !r.isnothing
+        return r
+    else
+        return unsafe_pyconvert_quick(T, supertype(S), o)
+    end
+end
+
+unsafe_pyconvert_quick_rule(T, S, o) = ValueOrNothingOrError{T}(nothing)
+
+function unsafe_pyconvert_generic(T, o)
+    mro = PyBorrowedRef(uptr(CPyTypeObject, uptr(CPyObject, o).type[]).mro[])
+    len = ccall((:PyTuple_Size, PYLIB), CPy_ssize_t, (PyPtr,), mro)
+    for i in 1:len
+        b = ccall((:PyTuple_GetItem, PYLIB), PyPtr, (PyPtr, CPy_ssize_t), mro, i-1)
+        name = Symbol(unsafe_string(uptr(CPyTypeObject, b).name[]))
+        r = unsafe_pyconvert_generic(T, Val(name), o) :: ValueOrNothingOrError{T}
+        if r.iserr || !r.isnothing
+            return r
+        end
+    end
+    return ValueOrNothingOrError{T}(nothing)
+end
+
+unsafe_pyconvert_generic(::Type{T}, name, o) where {T} =
+    unsafe_pyconvert_generic_rule(T, name, o) :: ValueOrNothingOrError{T}
+
+unsafe_pyconvert_generic_rule(T, name, o) = ValueOrNothingOrError{T}(nothing)
+
+unsafe_pyconvert_generic_rule(::Type{T}, ::Val{:int}, o) where {T<:Number} =
+    convert(ValueOrNothingOrError{T}, unsafe_pyint_convert(T, o))
+unsafe_pyconvert_generic_rule(::Type{T}, ::Val{:int}, o) where {T>:Number} =
+    convert(ValueOrNothingOrError{T}, unsafe_pyint_convert(BigInt, o))
+
+unsafe_pyconvert_generic_rule(::Type{T}, ::Val{:float}, o) where {T<:Number} =
+    convert(ValueOrNothingOrError{T}, unsafe_pyfloat_convert(T, o))
+unsafe_pyconvert_generic_rule(::Type{T}, ::Val{:float}, o) where {T>:Number} =
+    convert(ValueOrNothingOrError{T}, unsafe_pyfloat_convert(Float64, o))
+
+unsafe_pyconvert_generic_rule(::Type{T}, ::Val{:str}, o) where {T<:AbstractString} =
+    convert(ValueOrNothingOrError{T}, unsafe_pystr_convert(T, o))
+unsafe_pyconvert_generic_rule(::Type{T}, ::Val{:str}, o) where {T>:AbstractString} =
+    convert(ValueOrNothingOrError{T}, unsafe_pystr_convert(String, o))
+unsafe_pyconvert_generic_rule(::Type{Symbol}, ::Val{:str}, o) =
+    let r = unsafe_pystr_convert(String, o)
+        r.iserr ? ValueOrNothingOrError{Symbol}() : ValueOrNothingOrError{Symbol}(Some(Symbol(r.value)))
+    end
+
+function unsafe_pytryconvert(T::Union, o)
+    R = ValueOrNothingOrError{T}
+    a = unsafe_pytryconvert(T.a, o)
+    a.iserr && return R()
+    b = unsafe_pytryconvert(T.b, o)
+    b.iserr && return R()
+    if a.isnothing
+        if b.isnothing
+            return R(nothing)
+        else
+            return R(Some(b.value))
+        end
+    else
+        if b.isnothing
+            return R(Some(a.value))
+        else
+            pyerror_set_TypeError("ambiguous conversion")
+            return R()
+        end
+    end
+end
+function unsafe_pytryconvert(::Type{T}, o) where {T}
+    R = ValueOrNothingOrError{T}
+    if !isa(o, AbstractPyRef)
+        o = unsafe_pyobj(o)
+        isnull(o) && return R()
+    end
+    r = unsafe_pyconvert_quick(T, o) :: ValueOrNothingOrError{T}
+    r.iserr && return R()
+    r.isnothing || return R(Some(r.value))
+    r = unsafe_pyconvert_generic(T, o) :: ValueOrNothingOrError{T}
+    return r
+end
+function unsafe_pyconvert(::Type{T}, o) where {T}
+    R = ValueOrError{T}
+    r = unsafe_pytryconvert(T, o)
+    if r.iserr
+        return R()
+    elseif r.isnothing
+        pyerror_set_TypeError("cannot convert $(pytype(o).__name__) to julia.$T")
+        return R()
+    else
+        return R(r.value)
+    end
+end
+pytryconvert(T, o) = safe(unsafe_pytryconvert(T, o))
+pyconvert(T, o) = safe(unsafe_pyconvert(T, o))
+export pytryconvert, pyconvert
+
+@generated unsafe_pyconvertkey(o, ko) =
+    try
+        :(unsafe_pyconvert($(keytype(o)), ko))
+    catch
+        :(unsafe_pyconvert(Any, ko))
+    end
+
+unsafe_pyconvertkey(o::NamedTuple, ko) =
+    unsafe_pyconvert(Union{Int,Symbol}, ko)
+
+unsafe_pyconvertvalue(o, k, vo) = unsafe_pyconvertvalue(o, vo)
+
+@generated unsafe_pyconvertvalue(o, vo) =
+    try
+        :(unsafe_pyconvert($(eltype(o)), ko))
+    catch
+        :(unsafe_pyconvert(Any, ko))
+    end
 
 ### BASE
 
@@ -107,8 +227,25 @@ _getproperty(o, ::Val{Symbol("jl!array")}) = (args...)->PyArray(args..., o)
 Base.setproperty!(o::PyObject, a::Symbol, v) =
     pysetattr(o, a, v)
 
-Base.propertynames(o::PyObject) =
-    [Symbol(pystr(String, x)) for x in pydir(o)]
+function Base.propertynames(o::PyObject)
+    # this follows the logic of rlcompleter.py
+    function classmembers(c)
+        r = pydir(c)
+        if pyhasattr(c, "__bases__")
+            for b in c.__bases__
+                r += classmembers(b)
+            end
+        end
+        return r
+    end
+    words = pyset(pydir(o))
+    words.discard("__builtins__")
+    if pyhasattr(o, "__class__")
+        words.add("__class__")
+        words.update(classmembers(o.__class__))
+    end
+    [Symbol(pystr(String, x)) for x in words]
+end
 
 Base.:(==)(o1::PyObject, o2::PyObject) = pyeq(o1, o2)
 Base.:(!=)(o1::PyObject, o2::PyObject) = pyne(o1, o2)

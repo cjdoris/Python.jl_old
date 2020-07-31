@@ -21,6 +21,10 @@ cfunc = ["PyObject_HasAttr O O B", "PyObject_HasAttrString O S B"]
 [pygetattr]
 cfunc = ["PyObject_GetAttr O O O", "PyObject_GetAttrString O S O"]
 
+[pygenericgetattr]
+cfunc = "PyObject_GenericGetAttr O O O"
+safe = false
+
 [pysetattr]
 cfunc = ["PyObject_SetAttr O O O V", "PyObject_SetAttrString O S O V"]
 
@@ -40,23 +44,11 @@ cfunc = "PyObject_IsSubclass O O B"
 [pyisinstance]
 cfunc = "PyObject_IsInstance O O B"
 
-[pytypetype]
-cachedobj = {cobj="PyType_Type", type="type"}
-
-[pytype]
-defer = "pytypetype"
-
 [pyobjecttype]
-cachedobj = {cobj="PyBaseObject_Type", type="type"}
+cachedobj = {cobj="PyBaseObject_Type"}
 
 [pyobject]
 defer = "pyobjecttype"
-
-[pysupertype]
-cachedobj = {cobj="PySuper_Type", type="type"}
-
-[pysuper]
-defer = "pysupertype"
 
 [pyhash]
 cfunc = "PyObject_Hash O !CPy_hash_t"
@@ -76,13 +68,29 @@ cfunc = "PyObject_SetItem O O O V"
 [pydelitem]
 cfunc = "PyObject_DelItem O O V"
 
+### TYPE
+
+[pytypetype]
+cachedobj = {cobj="PyType_Type"}
+
+[pytype]
+defer = "pytypetype"
+
+### SUPER
+
+[pysupertype]
+cachedobj = {cobj="PySuper_Type"}
+
+[pysuper]
+defer = "pysupertype"
+
 ### NONE
 
 [pynone]
 cachedobj = {cobj="_Py_NoneStruct"}
 
 [pynonetype]
-cachedobj = {expr="unsafe_pytype(unsafe_pynone())", type="type"}
+cachedobj = {expr="unsafe_pytype(unsafe_pynone())"}
 
 ### ERRORS
 
@@ -110,7 +118,7 @@ cfunc = ["PyImport_ImportModule S O", "PyImport_Import O O"]
 ### STR
 
 [pystrtype]
-cachedobj = {cobj="PyUnicode_Type", type="type"}
+cachedobj = {cobj="PyUnicode_Type"}
 
 [pystr]
 cfunc = "PyObject_Str O O"
@@ -127,7 +135,7 @@ safe = false
 ### BYTES
 
 [pybytestype]
-cachedobj = {cobj="PyBytes_Type", type="type"}
+cachedobj = {cobj="PyBytes_Type"}
 
 [pybytes]
 cfunc = "PyObject_Bytes O O"
@@ -142,7 +150,7 @@ safe = false
 ### BOOL
 
 [pybooltype]
-cachedobj = {cobj="PyBool_Type", type="type"}
+cachedobj = {cobj="PyBool_Type"}
 
 [pytrue]
 cachedobj = {cobj="_Py_TrueStruct"}
@@ -156,7 +164,7 @@ defer = "pybooltype"
 ### INT
 
 [pyinttype]
-cachedobj = {cobj="PyLong_Type", type="type"}
+cachedobj = {cobj="PyLong_Type"}
 
 [pyint]
 cfunc = "PyNumber_Long O O"
@@ -181,7 +189,7 @@ safe = false
 ### FLOAT
 
 [pyfloattype]
-cachedobj = {cobj="PyFloat_Type", type="type"}
+cachedobj = {cobj="PyFloat_Type"}
 
 [pyfloat]
 cfunc = ["PyNumber_Float O O", "PyFloat_FromDouble =Real/Cdouble O"]
@@ -194,7 +202,7 @@ safe = false
 ### COMPLEX
 
 [pycomplextype]
-cachedobj = {cobj="PyComplex_Type", type="type"}
+cachedobj = {cobj="PyComplex_Type"}
 
 [pycomplex]
 cfunc = "PyComplex_FromDoubles =Real/Cdouble =Real/Cdouble O"
@@ -211,7 +219,7 @@ safe = false
 ### TUPLE
 
 [pytupletype]
-cachedobj = {cobj="PyTuple_Type", type="type"}
+cachedobj = {cobj="PyTuple_Type"}
 
 [pytuple]
 defer = "pytupletype"
@@ -227,7 +235,7 @@ safe = false
 ### LIST
 
 [pylisttype]
-cachedobj = {cobj="PyList_Type", type="type"}
+cachedobj = {cobj="PyList_Type"}
 
 [pylist]
 defer = "pylisttype"
@@ -243,7 +251,7 @@ safe = false
 ### BYTE ARRAY
 
 [pybytearraytype]
-cachedobj = {cobj="PyByteArray_Type", type="type"}
+cachedobj = {cobj="PyByteArray_Type"}
 
 [pybytearray]
 defer = "pybytearray"
@@ -251,7 +259,7 @@ defer = "pybytearray"
 ### DICT
 
 [pydicttype]
-cachedobj = {cobj="PyDict_Type", type="type"}
+cachedobj = {cobj="PyDict_Type"}
 
 [pydict]
 cfunc = "PyDict_New O"
@@ -268,13 +276,13 @@ safe = false
 ### SET
 
 [pysettype]
-cachedobj = {cobj="PySet_Type", type="type"}
+cachedobj = {cobj="PySet_Type"}
 
 [pyset]
 defer = "pysettype"
 
 [pyfrozensettype]
-cachedobj = {cobj="PyFrozenSet_Type", type="type"}
+cachedobj = {cobj="PyFrozenSet_Type"}
 
 [pyfrozenset]
 defer = "pyfrozensettype"
@@ -294,7 +302,7 @@ safe = false
 ### SLICE
 
 [pyslicetype]
-cachedobj = {cobj="PySlice_Type", type="type"}
+cachedobj = {cobj="PySlice_Type"}
 
 [pyslice]
 defer = "pyslicetype"
@@ -305,7 +313,7 @@ defer = "pyslicetype"
 cachedobj = {cobj="_Py_EllipsisObject"}
 
 [pyellipsistype]
-cachedobj = {expr="unsafe_pytype(unsafe_pyellipsis())", type="type"}
+cachedobj = {expr="unsafe_pytype(unsafe_pyellipsis())"}
 
 ### BUILTINS
 

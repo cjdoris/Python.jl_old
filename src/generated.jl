@@ -4,12 +4,12 @@ export pyset
 
 
 function unsafe_pyisinstance(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Bool}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Bool}()
     end
@@ -26,12 +26,12 @@ export pyisinstance
 
 
 function unsafe_pysub(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -40,7 +40,7 @@ function unsafe_pysub(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pysub(args...; kwargs...) = safe(unsafe_pysub(args...; kwargs...))
@@ -48,7 +48,7 @@ export pysub
 
 
 function unsafe_pynot(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Bool}()
     end
@@ -64,7 +64,7 @@ pynot(args...; kwargs...) = safe(unsafe_pynot(args...; kwargs...))
 export pynot
 
 
-const _pysupertype = pynulltype()
+const _pysupertype = pynull()
 unsafe_pysupertype() = unsafe_cacheget!(_pysupertype) do; cglobal((:PySuper_Type, PYLIB), CPyObject); end
 pysupertype(args...; kwargs...) = safe(unsafe_pysupertype(args...; kwargs...))
 export pysupertype
@@ -82,7 +82,7 @@ export pyhelp
 
 
 function unsafe_pydir(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -91,7 +91,7 @@ function unsafe_pydir(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pydir(args...; kwargs...) = safe(unsafe_pydir(args...; kwargs...))
@@ -105,12 +105,12 @@ export pytimetype
 
 
 function unsafe_pytuple_setitem(x1::Any, x2::Any, x3::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
 
-    if !(x3 isa PyObject)
+    if !isa(x3, AbstractPyRef)
         x3 = unsafe_pyobj(x3)
         isnull(x3) && return ValueOrError{Nothing}()
     end
@@ -127,7 +127,7 @@ end
 
 
 function unsafe_pyinv(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -136,7 +136,7 @@ function unsafe_pyinv(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyinv(args...; kwargs...) = safe(unsafe_pyinv(args...; kwargs...))
@@ -155,12 +155,12 @@ export pyfalse
 
 
 function unsafe_pyior(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -169,7 +169,7 @@ function unsafe_pyior(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyior(args...; kwargs...) = safe(unsafe_pyior(args...; kwargs...))
@@ -193,7 +193,7 @@ pynone(args...; kwargs...) = safe(unsafe_pynone(args...; kwargs...))
 export pynone
 
 
-const _pysettype = pynulltype()
+const _pysettype = pynull()
 unsafe_pysettype() = unsafe_cacheget!(_pysettype) do; cglobal((:PySet_Type, PYLIB), CPyObject); end
 pysettype(args...; kwargs...) = safe(unsafe_pysettype(args...; kwargs...))
 export pysettype
@@ -205,12 +205,12 @@ export pytimedelta
 
 
 function unsafe_pycompare_obj(x1::Any, x2::Any, x3::CPy_CompareOp)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -219,7 +219,7 @@ function unsafe_pycompare_obj(x1::Any, x2::Any, x3::CPy_CompareOp)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pycompare_obj(args...; kwargs...) = safe(unsafe_pycompare_obj(args...; kwargs...))
@@ -230,12 +230,12 @@ function unsafe_pyint_fromlonglong(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 
 
-const _pyobjecttype = pynulltype()
+const _pyobjecttype = pynull()
 unsafe_pyobjecttype() = unsafe_cacheget!(_pyobjecttype) do; cglobal((:PyBaseObject_Type, PYLIB), CPyObject); end
 pyobjecttype(args...; kwargs...) = safe(unsafe_pyobjecttype(args...; kwargs...))
 export pyobjecttype
@@ -247,7 +247,7 @@ export pyrange
 
 
 function unsafe_pybytes(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -256,7 +256,7 @@ function unsafe_pybytes(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 unsafe_pybytes(args...; kwargs...) = unsafe_pycall_args(unsafe_pybytestype(), args, kwargs)
@@ -265,12 +265,12 @@ export pybytes
 
 
 function unsafe_pytruediv(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -279,7 +279,7 @@ function unsafe_pytruediv(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pytruediv(args...; kwargs...) = safe(unsafe_pytruediv(args...; kwargs...))
@@ -287,12 +287,12 @@ export pytruediv
 
 
 function unsafe_pyilshift(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -301,7 +301,7 @@ function unsafe_pyilshift(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyilshift(args...; kwargs...) = safe(unsafe_pyilshift(args...; kwargs...))
@@ -313,7 +313,7 @@ pytuple(args...; kwargs...) = safe(unsafe_pytuple(args...; kwargs...))
 export pytuple
 
 
-const _pylisttype = pynulltype()
+const _pylisttype = pynull()
 unsafe_pylisttype() = unsafe_cacheget!(_pylisttype) do; cglobal((:PyList_Type, PYLIB), CPyObject); end
 pylisttype(args...; kwargs...) = safe(unsafe_pylisttype(args...; kwargs...))
 export pylisttype
@@ -325,12 +325,12 @@ export pytimezone
 
 
 function unsafe_pymatmul(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -339,7 +339,7 @@ function unsafe_pymatmul(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pymatmul(args...; kwargs...) = safe(unsafe_pymatmul(args...; kwargs...))
@@ -347,7 +347,7 @@ export pymatmul
 
 
 function unsafe_pyabs(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -356,7 +356,7 @@ function unsafe_pyabs(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyabs(args...; kwargs...) = safe(unsafe_pyabs(args...; kwargs...))
@@ -364,25 +364,37 @@ export pyabs
 
 
 function pyerror_set(x1::Any)
-    x1 = unsafe_pyobj(x1)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+    end
+
     r = ccall((:PyErr_SetNone, PYLIB), Cvoid, (Ptr{Cvoid},), x1)
     return r
 end
 function pyerror_set(x1::Any, x2::AbstractString)
-    x1 = unsafe_pyobj(x1)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+    end
+
     r = ccall((:PyErr_SetString, PYLIB), Cvoid, (Ptr{Cvoid}, Cstring), x1, x2)
     return r
 end
 function pyerror_set(x1::Any, x2::Any)
-    x1 = unsafe_pyobj(x1)
-    x2 = unsafe_pyobj(x2)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+    end
+
+    if !isa(x2, AbstractPyRef)
+        x2 = unsafe_pyobj(x2)
+    end
+
     r = ccall((:PyErr_SetObject, PYLIB), Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
     return r
 end
 
 
 function unsafe_pyiabs(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -391,7 +403,7 @@ function unsafe_pyiabs(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyiabs(args...; kwargs...) = safe(unsafe_pyiabs(args...; kwargs...))
@@ -399,12 +411,12 @@ export pyiabs
 
 
 function unsafe_pyxor(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -413,7 +425,7 @@ function unsafe_pyxor(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyxor(args...; kwargs...) = safe(unsafe_pyxor(args...; kwargs...))
@@ -421,17 +433,17 @@ export pyxor
 
 
 function unsafe_pysetitem(x1::Any, x2::Any, x3::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Nothing}()
     end
 
-    if !(x3 isa PyObject)
+    if !isa(x3, AbstractPyRef)
         x3 = unsafe_pyobj(x3)
         isnull(x3) && return ValueOrError{Nothing}()
     end
@@ -447,19 +459,19 @@ pysetitem(args...; kwargs...) = safe(unsafe_pysetitem(args...; kwargs...))
 export pysetitem
 
 
-const _pystrtype = pynulltype()
+const _pystrtype = pynull()
 unsafe_pystrtype() = unsafe_cacheget!(_pystrtype) do; cglobal((:PyUnicode_Type, PYLIB), CPyObject); end
 pystrtype(args...; kwargs...) = safe(unsafe_pystrtype(args...; kwargs...))
 export pystrtype
 
 
 function unsafe_pyirshift(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -468,7 +480,7 @@ function unsafe_pyirshift(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyirshift(args...; kwargs...) = safe(unsafe_pyirshift(args...; kwargs...))
@@ -476,12 +488,12 @@ export pyirshift
 
 
 function unsafe_pyifloordiv(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -490,7 +502,7 @@ function unsafe_pyifloordiv(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyifloordiv(args...; kwargs...) = safe(unsafe_pyifloordiv(args...; kwargs...))
@@ -502,18 +514,18 @@ function unsafe_pystr_decodeutf8(x1::Any, x2::Any, x3::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 
 
 function unsafe_pyisub(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -522,7 +534,7 @@ function unsafe_pyisub(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyisub(args...; kwargs...) = safe(unsafe_pyisub(args...; kwargs...))
@@ -530,12 +542,12 @@ export pyisub
 
 
 function unsafe_pyand(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -544,7 +556,7 @@ function unsafe_pyand(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyand(args...; kwargs...) = safe(unsafe_pyand(args...; kwargs...))
@@ -552,12 +564,12 @@ export pyand
 
 
 function unsafe_pymod(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -566,7 +578,7 @@ function unsafe_pymod(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pymod(args...; kwargs...) = safe(unsafe_pymod(args...; kwargs...))
@@ -578,18 +590,18 @@ function unsafe_pylist_new(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 
 
 function unsafe_pyidivmod(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -598,7 +610,7 @@ function unsafe_pyidivmod(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyidivmod(args...; kwargs...) = safe(unsafe_pyidivmod(args...; kwargs...))
@@ -606,12 +618,12 @@ export pyidivmod
 
 
 function unsafe_pycompare(x1::Any, x2::Any, x3::CPy_CompareOp)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Bool}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Bool}()
     end
@@ -627,24 +639,24 @@ pycompare(args...; kwargs...) = safe(unsafe_pycompare(args...; kwargs...))
 export pycompare
 
 
-const _pytupletype = pynulltype()
+const _pytupletype = pynull()
 unsafe_pytupletype() = unsafe_cacheget!(_pytupletype) do; cglobal((:PyTuple_Type, PYLIB), CPyObject); end
 pytupletype(args...; kwargs...) = safe(unsafe_pytupletype(args...; kwargs...))
 export pytupletype
 
 
 function unsafe_pydict_setitem(x1::Any, x2::Any, x3::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Nothing}()
     end
 
-    if !(x3 isa PyObject)
+    if !isa(x3, AbstractPyRef)
         x3 = unsafe_pyobj(x3)
         isnull(x3) && return ValueOrError{Nothing}()
     end
@@ -659,17 +671,17 @@ end
 
 
 function unsafe_pysetattr(x1::Any, x2::Any, x3::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Nothing}()
     end
 
-    if !(x3 isa PyObject)
+    if !isa(x3, AbstractPyRef)
         x3 = unsafe_pyobj(x3)
         isnull(x3) && return ValueOrError{Nothing}()
     end
@@ -682,12 +694,12 @@ function unsafe_pysetattr(x1::Any, x2::Any, x3::Any)
     end
 end
 function unsafe_pysetattr(x1::Any, x2::AbstractString, x3::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
 
-    if !(x3 isa PyObject)
+    if !isa(x3, AbstractPyRef)
         x3 = unsafe_pyobj(x3)
         isnull(x3) && return ValueOrError{Nothing}()
     end
@@ -703,7 +715,7 @@ pysetattr(args...; kwargs...) = safe(unsafe_pysetattr(args...; kwargs...))
 export pysetattr
 
 
-const _pyslicetype = pynulltype()
+const _pyslicetype = pynull()
 unsafe_pyslicetype() = unsafe_cacheget!(_pyslicetype) do; cglobal((:PySlice_Type, PYLIB), CPyObject); end
 pyslicetype(args...; kwargs...) = safe(unsafe_pyslicetype(args...; kwargs...))
 export pyslicetype
@@ -720,7 +732,7 @@ pydatetimemodule(args...; kwargs...) = safe(unsafe_pydatetimemodule(args...; kwa
 export pydatetimemodule
 
 
-const _pyfloattype = pynulltype()
+const _pyfloattype = pynull()
 unsafe_pyfloattype() = unsafe_cacheget!(_pyfloattype) do; cglobal((:PyFloat_Type, PYLIB), CPyObject); end
 pyfloattype(args...; kwargs...) = safe(unsafe_pyfloattype(args...; kwargs...))
 export pyfloattype
@@ -732,12 +744,12 @@ export pytzinfo
 
 
 function unsafe_pydelattr(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Nothing}()
     end
@@ -750,7 +762,7 @@ function unsafe_pydelattr(x1::Any, x2::Any)
     end
 end
 function unsafe_pydelattr(x1::Any, x2::AbstractString)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
@@ -767,7 +779,7 @@ export pydelattr
 
 
 function unsafe_pyrepr(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -776,7 +788,7 @@ function unsafe_pyrepr(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyrepr(args...; kwargs...) = safe(unsafe_pyrepr(args...; kwargs...))
@@ -784,12 +796,12 @@ export pyrepr
 
 
 function unsafe_pymul(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -798,7 +810,7 @@ function unsafe_pymul(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pymul(args...; kwargs...) = safe(unsafe_pymul(args...; kwargs...))
@@ -806,7 +818,7 @@ export pymul
 
 
 function unsafe_pyipos(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -815,26 +827,46 @@ function unsafe_pyipos(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyipos(args...; kwargs...) = safe(unsafe_pyipos(args...; kwargs...))
 export pyipos
 
 
-const _pytypetype = pynulltype()
+function unsafe_pygenericgetattr(x1::Any, x2::Any)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    if !isa(x2, AbstractPyRef)
+        x2 = unsafe_pyobj(x2)
+        isnull(x2) && return PYNULL
+    end
+
+    r = ccall((:PyObject_GenericGetAttr, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyRef(r, false))
+    end
+end
+
+
+const _pytypetype = pynull()
 unsafe_pytypetype() = unsafe_cacheget!(_pytypetype) do; cglobal((:PyType_Type, PYLIB), CPyObject); end
 pytypetype(args...; kwargs...) = safe(unsafe_pytypetype(args...; kwargs...))
 export pytypetype
 
 
 function unsafe_pyitruediv(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -843,7 +875,7 @@ function unsafe_pyitruediv(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyitruediv(args...; kwargs...) = safe(unsafe_pyitruediv(args...; kwargs...))
@@ -851,12 +883,12 @@ export pyitruediv
 
 
 function unsafe_pyhasattr(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Bool}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Bool}()
     end
@@ -869,7 +901,7 @@ function unsafe_pyhasattr(x1::Any, x2::Any)
     end
 end
 function unsafe_pyhasattr(x1::Any, x2::AbstractString)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Bool}()
     end
@@ -896,13 +928,13 @@ function unsafe_pyfrozenset_new(x1::Ptr)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 
 
 function unsafe_pypos(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -911,7 +943,7 @@ function unsafe_pypos(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pypos(args...; kwargs...) = safe(unsafe_pypos(args...; kwargs...))
@@ -919,17 +951,17 @@ export pypos
 
 
 function unsafe_pypow(x1::Any, x2::Any, x3::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
 
-    if !(x3 isa PyObject)
+    if !isa(x3, AbstractPyRef)
         x3 = unsafe_pyobj(x3)
         isnull(x3) && return PYNULL
     end
@@ -938,7 +970,7 @@ function unsafe_pypow(x1::Any, x2::Any, x3::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pypow(args...; kwargs...) = safe(unsafe_pypow(args...; kwargs...))
@@ -950,11 +982,11 @@ function unsafe_pyimport(x1::AbstractString)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 function unsafe_pyimport(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -963,7 +995,7 @@ function unsafe_pyimport(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyimport(args...; kwargs...) = safe(unsafe_pyimport(args...; kwargs...))
@@ -971,7 +1003,7 @@ export pyimport
 
 
 function unsafe_pyfloat_asdouble(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Cdouble}()
     end
@@ -997,7 +1029,7 @@ pyevalfunction(args...; kwargs...) = safe(unsafe_pyevalfunction(args...; kwargs.
 
 
 function unsafe_pyiinv(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1006,26 +1038,26 @@ function unsafe_pyiinv(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyiinv(args...; kwargs...) = safe(unsafe_pyiinv(args...; kwargs...))
 export pyiinv
 
 
-const _pyfrozensettype = pynulltype()
+const _pyfrozensettype = pynull()
 unsafe_pyfrozensettype() = unsafe_cacheget!(_pyfrozensettype) do; cglobal((:PyFrozenSet_Type, PYLIB), CPyObject); end
 pyfrozensettype(args...; kwargs...) = safe(unsafe_pyfrozensettype(args...; kwargs...))
 export pyfrozensettype
 
 
 function unsafe_pyadd(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1034,7 +1066,7 @@ function unsafe_pyadd(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyadd(args...; kwargs...) = safe(unsafe_pyadd(args...; kwargs...))
@@ -1042,7 +1074,7 @@ export pyadd
 
 
 function unsafe_pycomplex_imagasdouble(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Cdouble}()
     end
@@ -1056,20 +1088,20 @@ function unsafe_pycomplex_imagasdouble(x1::Any)
 end
 
 
-const _pybooltype = pynulltype()
+const _pybooltype = pynull()
 unsafe_pybooltype() = unsafe_cacheget!(_pybooltype) do; cglobal((:PyBool_Type, PYLIB), CPyObject); end
 pybooltype(args...; kwargs...) = safe(unsafe_pybooltype(args...; kwargs...))
 export pybooltype
 
 
-const _pynonetype = pynulltype()
+const _pynonetype = pynull()
 unsafe_pynonetype() = unsafe_cacheget!(_pynonetype) do; unsafe_pytype(unsafe_pynone()); end
 pynonetype(args...; kwargs...) = safe(unsafe_pynonetype(args...; kwargs...))
 export pynonetype
 
 
 function unsafe_pystr_asutf8string(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1078,18 +1110,18 @@ function unsafe_pystr_asutf8string(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 
 
 function unsafe_pylist_append(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Nothing}()
     end
@@ -1104,7 +1136,7 @@ end
 
 
 function unsafe_pyiter_next(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1113,7 +1145,7 @@ function unsafe_pyiter_next(x1::Any)
     if (r == C_NULL) && pyerror_occurred()
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 
@@ -1123,7 +1155,7 @@ function unsafe_pydict()
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 unsafe_pydict(args...; kwargs...) = unsafe_pycall_args(unsafe_pydicttype(), args, kwargs)
@@ -1143,12 +1175,12 @@ export pytrue
 
 
 function unsafe_pydict_setitem_string(x1::Any, x2::AbstractString, x3::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
 
-    if !(x3 isa PyObject)
+    if !isa(x3, AbstractPyRef)
         x3 = unsafe_pyobj(x3)
         isnull(x3) && return ValueOrError{Nothing}()
     end
@@ -1163,12 +1195,12 @@ end
 
 
 function unsafe_pydelitem(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Nothing}()
     end
@@ -1185,7 +1217,7 @@ export pydelitem
 
 
 function unsafe_pyint(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1194,7 +1226,7 @@ function unsafe_pyint(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 unsafe_pyint(args...; kwargs...) = unsafe_pycall_args(unsafe_pyinttype(), args, kwargs)
@@ -1207,25 +1239,25 @@ pydate(args...; kwargs...) = safe(unsafe_pydate(args...; kwargs...))
 export pydate
 
 
-const _pyinttype = pynulltype()
+const _pyinttype = pynull()
 unsafe_pyinttype() = unsafe_cacheget!(_pyinttype) do; cglobal((:PyLong_Type, PYLIB), CPyObject); end
 pyinttype(args...; kwargs...) = safe(unsafe_pyinttype(args...; kwargs...))
 export pyinttype
 
 
-const _pybytearraytype = pynulltype()
+const _pybytearraytype = pynull()
 unsafe_pybytearraytype() = unsafe_cacheget!(_pybytearraytype) do; cglobal((:PyByteArray_Type, PYLIB), CPyObject); end
 pybytearraytype(args...; kwargs...) = safe(unsafe_pybytearraytype(args...; kwargs...))
 export pybytearraytype
 
 
 function unsafe_pydivmod(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1234,7 +1266,7 @@ function unsafe_pydivmod(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pydivmod(args...; kwargs...) = safe(unsafe_pydivmod(args...; kwargs...))
@@ -1242,7 +1274,7 @@ export pydivmod
 
 
 function unsafe_pyneg(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1251,7 +1283,7 @@ function unsafe_pyneg(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyneg(args...; kwargs...) = safe(unsafe_pyneg(args...; kwargs...))
@@ -1259,12 +1291,12 @@ export pyneg
 
 
 function unsafe_pygetitem(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1273,7 +1305,7 @@ function unsafe_pygetitem(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pygetitem(args...; kwargs...) = safe(unsafe_pygetitem(args...; kwargs...))
@@ -1281,12 +1313,12 @@ export pygetitem
 
 
 function unsafe_pyor(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1295,7 +1327,7 @@ function unsafe_pyor(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyor(args...; kwargs...) = safe(unsafe_pyor(args...; kwargs...))
@@ -1303,7 +1335,7 @@ export pyor
 
 
 function unsafe_pyindex(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1312,7 +1344,7 @@ function unsafe_pyindex(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyindex(args...; kwargs...) = safe(unsafe_pyindex(args...; kwargs...))
@@ -1320,7 +1352,7 @@ export pyindex
 
 
 function unsafe_pycomplex_realasdouble(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Cdouble}()
     end
@@ -1335,7 +1367,7 @@ end
 
 
 function unsafe_pyint_aslonglong(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Clonglong}()
     end
@@ -1350,12 +1382,12 @@ end
 
 
 function unsafe_pyfloordiv(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1364,7 +1396,7 @@ function unsafe_pyfloordiv(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyfloordiv(args...; kwargs...) = safe(unsafe_pyfloordiv(args...; kwargs...))
@@ -1372,7 +1404,7 @@ export pyfloordiv
 
 
 function unsafe_pyhash(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{CPy_hash_t}()
     end
@@ -1398,7 +1430,7 @@ function unsafe_pyint_fromulonglong(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 
@@ -1410,12 +1442,12 @@ end
 
 
 function unsafe_pyissubclass(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Bool}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Bool}()
     end
@@ -1444,7 +1476,7 @@ export pytimezonetype
 
 
 function unsafe_pyint_asulonglong(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Culonglong}()
     end
@@ -1465,14 +1497,20 @@ export pyfractionsmodule
 
 
 function pyerror_givenexceptionmatches(x1::Any, x2::Any)
-    x1 = unsafe_pyobj(x1)
-    x2 = unsafe_pyobj(x2)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+    end
+
+    if !isa(x2, AbstractPyRef)
+        x2 = unsafe_pyobj(x2)
+    end
+
     r = ccall((:PyErr_GivenExceptionMatches, PYLIB), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
     return (r != 0)
 end
 
 
-const _pybytestype = pynulltype()
+const _pybytestype = pynull()
 unsafe_pybytestype() = unsafe_cacheget!(_pybytestype) do; cglobal((:PyBytes_Type, PYLIB), CPyObject); end
 pybytestype(args...; kwargs...) = safe(unsafe_pybytestype(args...; kwargs...))
 export pybytestype
@@ -1484,14 +1522,14 @@ pybuiltinsmodule(args...; kwargs...) = safe(unsafe_pybuiltinsmodule(args...; kwa
 export pybuiltinsmodule
 
 
-const _pycomplextype = pynulltype()
+const _pycomplextype = pynull()
 unsafe_pycomplextype() = unsafe_cacheget!(_pycomplextype) do; cglobal((:PyComplex_Type, PYLIB), CPyObject); end
 pycomplextype(args...; kwargs...) = safe(unsafe_pycomplextype(args...; kwargs...))
 export pycomplextype
 
 
 function unsafe_pyfloat(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1500,7 +1538,7 @@ function unsafe_pyfloat(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 function unsafe_pyfloat(x1::Real)
@@ -1508,7 +1546,7 @@ function unsafe_pyfloat(x1::Real)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 unsafe_pyfloat(args...; kwargs...) = unsafe_pycall_args(unsafe_pyfloattype(), args, kwargs)
@@ -1517,7 +1555,7 @@ export pyfloat
 
 
 function unsafe_pytruth(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Bool}()
     end
@@ -1543,13 +1581,13 @@ function unsafe_pytuple_new(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 
 
 function unsafe_pyascii(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1558,7 +1596,7 @@ function unsafe_pyascii(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyascii(args...; kwargs...) = safe(unsafe_pyascii(args...; kwargs...))
@@ -1566,12 +1604,12 @@ export pyascii
 
 
 function unsafe_pyixor(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1580,7 +1618,7 @@ function unsafe_pyixor(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyixor(args...; kwargs...) = safe(unsafe_pyixor(args...; kwargs...))
@@ -1604,7 +1642,7 @@ export pybytearray
 
 
 function unsafe_pyiter(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1613,7 +1651,7 @@ function unsafe_pyiter(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyiter(args...; kwargs...) = safe(unsafe_pyiter(args...; kwargs...))
@@ -1625,7 +1663,7 @@ function unsafe_pycomplex(x1::Real, x2::Real)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 unsafe_pycomplex(args...; kwargs...) = unsafe_pycall_args(unsafe_pycomplextype(), args, kwargs)
@@ -1640,12 +1678,12 @@ export pyfractiontype
 
 
 function unsafe_pyrshift(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1654,7 +1692,7 @@ function unsafe_pyrshift(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyrshift(args...; kwargs...) = safe(unsafe_pyrshift(args...; kwargs...))
@@ -1662,12 +1700,12 @@ export pyrshift
 
 
 function unsafe_pyimod(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1676,7 +1714,7 @@ function unsafe_pyimod(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyimod(args...; kwargs...) = safe(unsafe_pyimod(args...; kwargs...))
@@ -1684,17 +1722,17 @@ export pyimod
 
 
 function unsafe_pyipow(x1::Any, x2::Any, x3::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
 
-    if !(x3 isa PyObject)
+    if !isa(x3, AbstractPyRef)
         x3 = unsafe_pyobj(x3)
         isnull(x3) && return PYNULL
     end
@@ -1703,7 +1741,7 @@ function unsafe_pyipow(x1::Any, x2::Any, x3::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyipow(args...; kwargs...) = safe(unsafe_pyipow(args...; kwargs...))
@@ -1711,7 +1749,7 @@ export pyipow
 
 
 function unsafe_pylen(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{CPy_ssize_t}()
     end
@@ -1732,7 +1770,7 @@ function unsafe_pyset_new(x1::Ptr)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 
@@ -1749,12 +1787,12 @@ export pyfraction
 
 
 function unsafe_pyimul(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1763,7 +1801,7 @@ function unsafe_pyimul(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyimul(args...; kwargs...) = safe(unsafe_pyimul(args...; kwargs...))
@@ -1771,7 +1809,7 @@ export pyimul
 
 
 function unsafe_pyineg(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1780,7 +1818,7 @@ function unsafe_pyineg(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyineg(args...; kwargs...) = safe(unsafe_pyineg(args...; kwargs...))
@@ -1788,12 +1826,12 @@ export pyineg
 
 
 function unsafe_pyimatmul(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1802,7 +1840,7 @@ function unsafe_pyimatmul(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyimatmul(args...; kwargs...) = safe(unsafe_pyimatmul(args...; kwargs...))
@@ -1825,12 +1863,12 @@ export pydatetime
 
 
 function unsafe_pyiadd(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1839,7 +1877,7 @@ function unsafe_pyiadd(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyiadd(args...; kwargs...) = safe(unsafe_pyiadd(args...; kwargs...))
@@ -1852,12 +1890,12 @@ export pybool
 
 
 function unsafe_pylshift(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1866,7 +1904,7 @@ function unsafe_pylshift(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pylshift(args...; kwargs...) = safe(unsafe_pylshift(args...; kwargs...))
@@ -1874,7 +1912,7 @@ export pylshift
 
 
 function unsafe_pystr(x1::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1883,7 +1921,7 @@ function unsafe_pystr(x1::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 unsafe_pystr(args...; kwargs...) = unsafe_pycall_args(unsafe_pystrtype(), args, kwargs)
@@ -1892,12 +1930,12 @@ export pystr
 
 
 function unsafe_pyiand(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1906,7 +1944,7 @@ function unsafe_pyiand(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pyiand(args...; kwargs...) = safe(unsafe_pyiand(args...; kwargs...))
@@ -1914,12 +1952,12 @@ export pyiand
 
 
 function unsafe_pyset_add(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return ValueOrError{Nothing}()
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return ValueOrError{Nothing}()
     end
@@ -1938,19 +1976,19 @@ pysuper(args...; kwargs...) = safe(unsafe_pysuper(args...; kwargs...))
 export pysuper
 
 
-const _pyellipsistype = pynulltype()
+const _pyellipsistype = pynull()
 unsafe_pyellipsistype() = unsafe_cacheget!(_pyellipsistype) do; unsafe_pytype(unsafe_pyellipsis()); end
 pyellipsistype(args...; kwargs...) = safe(unsafe_pyellipsistype(args...; kwargs...))
 export pyellipsistype
 
 
 function unsafe_pygetattr(x1::Any, x2::Any)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
 
-    if !(x2 isa PyObject)
+    if !isa(x2, AbstractPyRef)
         x2 = unsafe_pyobj(x2)
         isnull(x2) && return PYNULL
     end
@@ -1959,11 +1997,11 @@ function unsafe_pygetattr(x1::Any, x2::Any)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 function unsafe_pygetattr(x1::Any, x2::AbstractString)
-    if !(x1 isa PyObject)
+    if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
         isnull(x1) && return PYNULL
     end
@@ -1972,14 +2010,14 @@ function unsafe_pygetattr(x1::Any, x2::AbstractString)
     if r == C_NULL
         return PYNULL
     else
-        return unsafe_pyobj(PyObjRef(r, false))
+        return unsafe_pyobj(PyRef(r, false))
     end
 end
 pygetattr(args...; kwargs...) = safe(unsafe_pygetattr(args...; kwargs...))
 export pygetattr
 
 
-const _pydicttype = pynulltype()
+const _pydicttype = pynull()
 unsafe_pydicttype() = unsafe_cacheget!(_pydicttype) do; cglobal((:PyDict_Type, PYLIB), CPyObject); end
 pydicttype(args...; kwargs...) = safe(unsafe_pydicttype(args...; kwargs...))
 export pydicttype
@@ -1991,7 +2029,7 @@ export pyslice
 
 
 const _pyexc_BaseException_type = pynull()
-unsafe_pyexc_BaseException_type() = unsafe_cacheget!(_pyexc_BaseException_type) do; unsafe_load(cglobal((:PyExc_BaseException, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_BaseException_type() = unsafe_cacheget!(_pyexc_BaseException_type) do; unsafe_load(cglobal((:PyExc_BaseException, PYLIB), PyPtr)); end
 pyexc_BaseException_type(args...; kwargs...) = safe(unsafe_pyexc_BaseException_type(args...; kwargs...))
 export pyexc_BaseException_type
 
@@ -2002,7 +2040,7 @@ pyerror_occurred_BaseException() = pyerror_occurred(unsafe_pyexc_BaseException_t
 export pyerror_occurred_BaseException
 
 const _pyexc_Exception_type = pynull()
-unsafe_pyexc_Exception_type() = unsafe_cacheget!(_pyexc_Exception_type) do; unsafe_load(cglobal((:PyExc_Exception, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_Exception_type() = unsafe_cacheget!(_pyexc_Exception_type) do; unsafe_load(cglobal((:PyExc_Exception, PYLIB), PyPtr)); end
 pyexc_Exception_type(args...; kwargs...) = safe(unsafe_pyexc_Exception_type(args...; kwargs...))
 export pyexc_Exception_type
 
@@ -2013,7 +2051,7 @@ pyerror_occurred_Exception() = pyerror_occurred(unsafe_pyexc_Exception_type())
 export pyerror_occurred_Exception
 
 const _pyexc_StopIteration_type = pynull()
-unsafe_pyexc_StopIteration_type() = unsafe_cacheget!(_pyexc_StopIteration_type) do; unsafe_load(cglobal((:PyExc_StopIteration, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_StopIteration_type() = unsafe_cacheget!(_pyexc_StopIteration_type) do; unsafe_load(cglobal((:PyExc_StopIteration, PYLIB), PyPtr)); end
 pyexc_StopIteration_type(args...; kwargs...) = safe(unsafe_pyexc_StopIteration_type(args...; kwargs...))
 export pyexc_StopIteration_type
 
@@ -2024,7 +2062,7 @@ pyerror_occurred_StopIteration() = pyerror_occurred(unsafe_pyexc_StopIteration_t
 export pyerror_occurred_StopIteration
 
 const _pyexc_GeneratorExit_type = pynull()
-unsafe_pyexc_GeneratorExit_type() = unsafe_cacheget!(_pyexc_GeneratorExit_type) do; unsafe_load(cglobal((:PyExc_GeneratorExit, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_GeneratorExit_type() = unsafe_cacheget!(_pyexc_GeneratorExit_type) do; unsafe_load(cglobal((:PyExc_GeneratorExit, PYLIB), PyPtr)); end
 pyexc_GeneratorExit_type(args...; kwargs...) = safe(unsafe_pyexc_GeneratorExit_type(args...; kwargs...))
 export pyexc_GeneratorExit_type
 
@@ -2035,7 +2073,7 @@ pyerror_occurred_GeneratorExit() = pyerror_occurred(unsafe_pyexc_GeneratorExit_t
 export pyerror_occurred_GeneratorExit
 
 const _pyexc_ArithmeticError_type = pynull()
-unsafe_pyexc_ArithmeticError_type() = unsafe_cacheget!(_pyexc_ArithmeticError_type) do; unsafe_load(cglobal((:PyExc_ArithmeticError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_ArithmeticError_type() = unsafe_cacheget!(_pyexc_ArithmeticError_type) do; unsafe_load(cglobal((:PyExc_ArithmeticError, PYLIB), PyPtr)); end
 pyexc_ArithmeticError_type(args...; kwargs...) = safe(unsafe_pyexc_ArithmeticError_type(args...; kwargs...))
 export pyexc_ArithmeticError_type
 
@@ -2046,7 +2084,7 @@ pyerror_occurred_ArithmeticError() = pyerror_occurred(unsafe_pyexc_ArithmeticErr
 export pyerror_occurred_ArithmeticError
 
 const _pyexc_LookupError_type = pynull()
-unsafe_pyexc_LookupError_type() = unsafe_cacheget!(_pyexc_LookupError_type) do; unsafe_load(cglobal((:PyExc_LookupError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_LookupError_type() = unsafe_cacheget!(_pyexc_LookupError_type) do; unsafe_load(cglobal((:PyExc_LookupError, PYLIB), PyPtr)); end
 pyexc_LookupError_type(args...; kwargs...) = safe(unsafe_pyexc_LookupError_type(args...; kwargs...))
 export pyexc_LookupError_type
 
@@ -2057,7 +2095,7 @@ pyerror_occurred_LookupError() = pyerror_occurred(unsafe_pyexc_LookupError_type(
 export pyerror_occurred_LookupError
 
 const _pyexc_AssertionError_type = pynull()
-unsafe_pyexc_AssertionError_type() = unsafe_cacheget!(_pyexc_AssertionError_type) do; unsafe_load(cglobal((:PyExc_AssertionError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_AssertionError_type() = unsafe_cacheget!(_pyexc_AssertionError_type) do; unsafe_load(cglobal((:PyExc_AssertionError, PYLIB), PyPtr)); end
 pyexc_AssertionError_type(args...; kwargs...) = safe(unsafe_pyexc_AssertionError_type(args...; kwargs...))
 export pyexc_AssertionError_type
 
@@ -2068,7 +2106,7 @@ pyerror_occurred_AssertionError() = pyerror_occurred(unsafe_pyexc_AssertionError
 export pyerror_occurred_AssertionError
 
 const _pyexc_AttributeError_type = pynull()
-unsafe_pyexc_AttributeError_type() = unsafe_cacheget!(_pyexc_AttributeError_type) do; unsafe_load(cglobal((:PyExc_AttributeError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_AttributeError_type() = unsafe_cacheget!(_pyexc_AttributeError_type) do; unsafe_load(cglobal((:PyExc_AttributeError, PYLIB), PyPtr)); end
 pyexc_AttributeError_type(args...; kwargs...) = safe(unsafe_pyexc_AttributeError_type(args...; kwargs...))
 export pyexc_AttributeError_type
 
@@ -2079,7 +2117,7 @@ pyerror_occurred_AttributeError() = pyerror_occurred(unsafe_pyexc_AttributeError
 export pyerror_occurred_AttributeError
 
 const _pyexc_BufferError_type = pynull()
-unsafe_pyexc_BufferError_type() = unsafe_cacheget!(_pyexc_BufferError_type) do; unsafe_load(cglobal((:PyExc_BufferError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_BufferError_type() = unsafe_cacheget!(_pyexc_BufferError_type) do; unsafe_load(cglobal((:PyExc_BufferError, PYLIB), PyPtr)); end
 pyexc_BufferError_type(args...; kwargs...) = safe(unsafe_pyexc_BufferError_type(args...; kwargs...))
 export pyexc_BufferError_type
 
@@ -2090,7 +2128,7 @@ pyerror_occurred_BufferError() = pyerror_occurred(unsafe_pyexc_BufferError_type(
 export pyerror_occurred_BufferError
 
 const _pyexc_EOFError_type = pynull()
-unsafe_pyexc_EOFError_type() = unsafe_cacheget!(_pyexc_EOFError_type) do; unsafe_load(cglobal((:PyExc_EOFError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_EOFError_type() = unsafe_cacheget!(_pyexc_EOFError_type) do; unsafe_load(cglobal((:PyExc_EOFError, PYLIB), PyPtr)); end
 pyexc_EOFError_type(args...; kwargs...) = safe(unsafe_pyexc_EOFError_type(args...; kwargs...))
 export pyexc_EOFError_type
 
@@ -2101,7 +2139,7 @@ pyerror_occurred_EOFError() = pyerror_occurred(unsafe_pyexc_EOFError_type())
 export pyerror_occurred_EOFError
 
 const _pyexc_FloatingPointError_type = pynull()
-unsafe_pyexc_FloatingPointError_type() = unsafe_cacheget!(_pyexc_FloatingPointError_type) do; unsafe_load(cglobal((:PyExc_FloatingPointError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_FloatingPointError_type() = unsafe_cacheget!(_pyexc_FloatingPointError_type) do; unsafe_load(cglobal((:PyExc_FloatingPointError, PYLIB), PyPtr)); end
 pyexc_FloatingPointError_type(args...; kwargs...) = safe(unsafe_pyexc_FloatingPointError_type(args...; kwargs...))
 export pyexc_FloatingPointError_type
 
@@ -2112,7 +2150,7 @@ pyerror_occurred_FloatingPointError() = pyerror_occurred(unsafe_pyexc_FloatingPo
 export pyerror_occurred_FloatingPointError
 
 const _pyexc_OSError_type = pynull()
-unsafe_pyexc_OSError_type() = unsafe_cacheget!(_pyexc_OSError_type) do; unsafe_load(cglobal((:PyExc_OSError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_OSError_type() = unsafe_cacheget!(_pyexc_OSError_type) do; unsafe_load(cglobal((:PyExc_OSError, PYLIB), PyPtr)); end
 pyexc_OSError_type(args...; kwargs...) = safe(unsafe_pyexc_OSError_type(args...; kwargs...))
 export pyexc_OSError_type
 
@@ -2123,7 +2161,7 @@ pyerror_occurred_OSError() = pyerror_occurred(unsafe_pyexc_OSError_type())
 export pyerror_occurred_OSError
 
 const _pyexc_ImportError_type = pynull()
-unsafe_pyexc_ImportError_type() = unsafe_cacheget!(_pyexc_ImportError_type) do; unsafe_load(cglobal((:PyExc_ImportError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_ImportError_type() = unsafe_cacheget!(_pyexc_ImportError_type) do; unsafe_load(cglobal((:PyExc_ImportError, PYLIB), PyPtr)); end
 pyexc_ImportError_type(args...; kwargs...) = safe(unsafe_pyexc_ImportError_type(args...; kwargs...))
 export pyexc_ImportError_type
 
@@ -2134,7 +2172,7 @@ pyerror_occurred_ImportError() = pyerror_occurred(unsafe_pyexc_ImportError_type(
 export pyerror_occurred_ImportError
 
 const _pyexc_IndexError_type = pynull()
-unsafe_pyexc_IndexError_type() = unsafe_cacheget!(_pyexc_IndexError_type) do; unsafe_load(cglobal((:PyExc_IndexError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_IndexError_type() = unsafe_cacheget!(_pyexc_IndexError_type) do; unsafe_load(cglobal((:PyExc_IndexError, PYLIB), PyPtr)); end
 pyexc_IndexError_type(args...; kwargs...) = safe(unsafe_pyexc_IndexError_type(args...; kwargs...))
 export pyexc_IndexError_type
 
@@ -2145,7 +2183,7 @@ pyerror_occurred_IndexError() = pyerror_occurred(unsafe_pyexc_IndexError_type())
 export pyerror_occurred_IndexError
 
 const _pyexc_KeyError_type = pynull()
-unsafe_pyexc_KeyError_type() = unsafe_cacheget!(_pyexc_KeyError_type) do; unsafe_load(cglobal((:PyExc_KeyError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_KeyError_type() = unsafe_cacheget!(_pyexc_KeyError_type) do; unsafe_load(cglobal((:PyExc_KeyError, PYLIB), PyPtr)); end
 pyexc_KeyError_type(args...; kwargs...) = safe(unsafe_pyexc_KeyError_type(args...; kwargs...))
 export pyexc_KeyError_type
 
@@ -2156,7 +2194,7 @@ pyerror_occurred_KeyError() = pyerror_occurred(unsafe_pyexc_KeyError_type())
 export pyerror_occurred_KeyError
 
 const _pyexc_KeyboardInterrupt_type = pynull()
-unsafe_pyexc_KeyboardInterrupt_type() = unsafe_cacheget!(_pyexc_KeyboardInterrupt_type) do; unsafe_load(cglobal((:PyExc_KeyboardInterrupt, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_KeyboardInterrupt_type() = unsafe_cacheget!(_pyexc_KeyboardInterrupt_type) do; unsafe_load(cglobal((:PyExc_KeyboardInterrupt, PYLIB), PyPtr)); end
 pyexc_KeyboardInterrupt_type(args...; kwargs...) = safe(unsafe_pyexc_KeyboardInterrupt_type(args...; kwargs...))
 export pyexc_KeyboardInterrupt_type
 
@@ -2167,7 +2205,7 @@ pyerror_occurred_KeyboardInterrupt() = pyerror_occurred(unsafe_pyexc_KeyboardInt
 export pyerror_occurred_KeyboardInterrupt
 
 const _pyexc_MemoryError_type = pynull()
-unsafe_pyexc_MemoryError_type() = unsafe_cacheget!(_pyexc_MemoryError_type) do; unsafe_load(cglobal((:PyExc_MemoryError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_MemoryError_type() = unsafe_cacheget!(_pyexc_MemoryError_type) do; unsafe_load(cglobal((:PyExc_MemoryError, PYLIB), PyPtr)); end
 pyexc_MemoryError_type(args...; kwargs...) = safe(unsafe_pyexc_MemoryError_type(args...; kwargs...))
 export pyexc_MemoryError_type
 
@@ -2178,7 +2216,7 @@ pyerror_occurred_MemoryError() = pyerror_occurred(unsafe_pyexc_MemoryError_type(
 export pyerror_occurred_MemoryError
 
 const _pyexc_NameError_type = pynull()
-unsafe_pyexc_NameError_type() = unsafe_cacheget!(_pyexc_NameError_type) do; unsafe_load(cglobal((:PyExc_NameError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_NameError_type() = unsafe_cacheget!(_pyexc_NameError_type) do; unsafe_load(cglobal((:PyExc_NameError, PYLIB), PyPtr)); end
 pyexc_NameError_type(args...; kwargs...) = safe(unsafe_pyexc_NameError_type(args...; kwargs...))
 export pyexc_NameError_type
 
@@ -2189,7 +2227,7 @@ pyerror_occurred_NameError() = pyerror_occurred(unsafe_pyexc_NameError_type())
 export pyerror_occurred_NameError
 
 const _pyexc_OverflowError_type = pynull()
-unsafe_pyexc_OverflowError_type() = unsafe_cacheget!(_pyexc_OverflowError_type) do; unsafe_load(cglobal((:PyExc_OverflowError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_OverflowError_type() = unsafe_cacheget!(_pyexc_OverflowError_type) do; unsafe_load(cglobal((:PyExc_OverflowError, PYLIB), PyPtr)); end
 pyexc_OverflowError_type(args...; kwargs...) = safe(unsafe_pyexc_OverflowError_type(args...; kwargs...))
 export pyexc_OverflowError_type
 
@@ -2200,7 +2238,7 @@ pyerror_occurred_OverflowError() = pyerror_occurred(unsafe_pyexc_OverflowError_t
 export pyerror_occurred_OverflowError
 
 const _pyexc_RuntimeError_type = pynull()
-unsafe_pyexc_RuntimeError_type() = unsafe_cacheget!(_pyexc_RuntimeError_type) do; unsafe_load(cglobal((:PyExc_RuntimeError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_RuntimeError_type() = unsafe_cacheget!(_pyexc_RuntimeError_type) do; unsafe_load(cglobal((:PyExc_RuntimeError, PYLIB), PyPtr)); end
 pyexc_RuntimeError_type(args...; kwargs...) = safe(unsafe_pyexc_RuntimeError_type(args...; kwargs...))
 export pyexc_RuntimeError_type
 
@@ -2211,7 +2249,7 @@ pyerror_occurred_RuntimeError() = pyerror_occurred(unsafe_pyexc_RuntimeError_typ
 export pyerror_occurred_RuntimeError
 
 const _pyexc_NotImplementedError_type = pynull()
-unsafe_pyexc_NotImplementedError_type() = unsafe_cacheget!(_pyexc_NotImplementedError_type) do; unsafe_load(cglobal((:PyExc_NotImplementedError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_NotImplementedError_type() = unsafe_cacheget!(_pyexc_NotImplementedError_type) do; unsafe_load(cglobal((:PyExc_NotImplementedError, PYLIB), PyPtr)); end
 pyexc_NotImplementedError_type(args...; kwargs...) = safe(unsafe_pyexc_NotImplementedError_type(args...; kwargs...))
 export pyexc_NotImplementedError_type
 
@@ -2222,7 +2260,7 @@ pyerror_occurred_NotImplementedError() = pyerror_occurred(unsafe_pyexc_NotImplem
 export pyerror_occurred_NotImplementedError
 
 const _pyexc_SyntaxError_type = pynull()
-unsafe_pyexc_SyntaxError_type() = unsafe_cacheget!(_pyexc_SyntaxError_type) do; unsafe_load(cglobal((:PyExc_SyntaxError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_SyntaxError_type() = unsafe_cacheget!(_pyexc_SyntaxError_type) do; unsafe_load(cglobal((:PyExc_SyntaxError, PYLIB), PyPtr)); end
 pyexc_SyntaxError_type(args...; kwargs...) = safe(unsafe_pyexc_SyntaxError_type(args...; kwargs...))
 export pyexc_SyntaxError_type
 
@@ -2233,7 +2271,7 @@ pyerror_occurred_SyntaxError() = pyerror_occurred(unsafe_pyexc_SyntaxError_type(
 export pyerror_occurred_SyntaxError
 
 const _pyexc_IndentationError_type = pynull()
-unsafe_pyexc_IndentationError_type() = unsafe_cacheget!(_pyexc_IndentationError_type) do; unsafe_load(cglobal((:PyExc_IndentationError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_IndentationError_type() = unsafe_cacheget!(_pyexc_IndentationError_type) do; unsafe_load(cglobal((:PyExc_IndentationError, PYLIB), PyPtr)); end
 pyexc_IndentationError_type(args...; kwargs...) = safe(unsafe_pyexc_IndentationError_type(args...; kwargs...))
 export pyexc_IndentationError_type
 
@@ -2244,7 +2282,7 @@ pyerror_occurred_IndentationError() = pyerror_occurred(unsafe_pyexc_IndentationE
 export pyerror_occurred_IndentationError
 
 const _pyexc_TabError_type = pynull()
-unsafe_pyexc_TabError_type() = unsafe_cacheget!(_pyexc_TabError_type) do; unsafe_load(cglobal((:PyExc_TabError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_TabError_type() = unsafe_cacheget!(_pyexc_TabError_type) do; unsafe_load(cglobal((:PyExc_TabError, PYLIB), PyPtr)); end
 pyexc_TabError_type(args...; kwargs...) = safe(unsafe_pyexc_TabError_type(args...; kwargs...))
 export pyexc_TabError_type
 
@@ -2255,7 +2293,7 @@ pyerror_occurred_TabError() = pyerror_occurred(unsafe_pyexc_TabError_type())
 export pyerror_occurred_TabError
 
 const _pyexc_ReferenceError_type = pynull()
-unsafe_pyexc_ReferenceError_type() = unsafe_cacheget!(_pyexc_ReferenceError_type) do; unsafe_load(cglobal((:PyExc_ReferenceError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_ReferenceError_type() = unsafe_cacheget!(_pyexc_ReferenceError_type) do; unsafe_load(cglobal((:PyExc_ReferenceError, PYLIB), PyPtr)); end
 pyexc_ReferenceError_type(args...; kwargs...) = safe(unsafe_pyexc_ReferenceError_type(args...; kwargs...))
 export pyexc_ReferenceError_type
 
@@ -2266,7 +2304,7 @@ pyerror_occurred_ReferenceError() = pyerror_occurred(unsafe_pyexc_ReferenceError
 export pyerror_occurred_ReferenceError
 
 const _pyexc_SystemError_type = pynull()
-unsafe_pyexc_SystemError_type() = unsafe_cacheget!(_pyexc_SystemError_type) do; unsafe_load(cglobal((:PyExc_SystemError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_SystemError_type() = unsafe_cacheget!(_pyexc_SystemError_type) do; unsafe_load(cglobal((:PyExc_SystemError, PYLIB), PyPtr)); end
 pyexc_SystemError_type(args...; kwargs...) = safe(unsafe_pyexc_SystemError_type(args...; kwargs...))
 export pyexc_SystemError_type
 
@@ -2277,7 +2315,7 @@ pyerror_occurred_SystemError() = pyerror_occurred(unsafe_pyexc_SystemError_type(
 export pyerror_occurred_SystemError
 
 const _pyexc_SystemExit_type = pynull()
-unsafe_pyexc_SystemExit_type() = unsafe_cacheget!(_pyexc_SystemExit_type) do; unsafe_load(cglobal((:PyExc_SystemExit, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_SystemExit_type() = unsafe_cacheget!(_pyexc_SystemExit_type) do; unsafe_load(cglobal((:PyExc_SystemExit, PYLIB), PyPtr)); end
 pyexc_SystemExit_type(args...; kwargs...) = safe(unsafe_pyexc_SystemExit_type(args...; kwargs...))
 export pyexc_SystemExit_type
 
@@ -2288,7 +2326,7 @@ pyerror_occurred_SystemExit() = pyerror_occurred(unsafe_pyexc_SystemExit_type())
 export pyerror_occurred_SystemExit
 
 const _pyexc_TypeError_type = pynull()
-unsafe_pyexc_TypeError_type() = unsafe_cacheget!(_pyexc_TypeError_type) do; unsafe_load(cglobal((:PyExc_TypeError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_TypeError_type() = unsafe_cacheget!(_pyexc_TypeError_type) do; unsafe_load(cglobal((:PyExc_TypeError, PYLIB), PyPtr)); end
 pyexc_TypeError_type(args...; kwargs...) = safe(unsafe_pyexc_TypeError_type(args...; kwargs...))
 export pyexc_TypeError_type
 
@@ -2299,7 +2337,7 @@ pyerror_occurred_TypeError() = pyerror_occurred(unsafe_pyexc_TypeError_type())
 export pyerror_occurred_TypeError
 
 const _pyexc_UnboundLocalError_type = pynull()
-unsafe_pyexc_UnboundLocalError_type() = unsafe_cacheget!(_pyexc_UnboundLocalError_type) do; unsafe_load(cglobal((:PyExc_UnboundLocalError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_UnboundLocalError_type() = unsafe_cacheget!(_pyexc_UnboundLocalError_type) do; unsafe_load(cglobal((:PyExc_UnboundLocalError, PYLIB), PyPtr)); end
 pyexc_UnboundLocalError_type(args...; kwargs...) = safe(unsafe_pyexc_UnboundLocalError_type(args...; kwargs...))
 export pyexc_UnboundLocalError_type
 
@@ -2310,7 +2348,7 @@ pyerror_occurred_UnboundLocalError() = pyerror_occurred(unsafe_pyexc_UnboundLoca
 export pyerror_occurred_UnboundLocalError
 
 const _pyexc_UnicodeError_type = pynull()
-unsafe_pyexc_UnicodeError_type() = unsafe_cacheget!(_pyexc_UnicodeError_type) do; unsafe_load(cglobal((:PyExc_UnicodeError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_UnicodeError_type() = unsafe_cacheget!(_pyexc_UnicodeError_type) do; unsafe_load(cglobal((:PyExc_UnicodeError, PYLIB), PyPtr)); end
 pyexc_UnicodeError_type(args...; kwargs...) = safe(unsafe_pyexc_UnicodeError_type(args...; kwargs...))
 export pyexc_UnicodeError_type
 
@@ -2321,7 +2359,7 @@ pyerror_occurred_UnicodeError() = pyerror_occurred(unsafe_pyexc_UnicodeError_typ
 export pyerror_occurred_UnicodeError
 
 const _pyexc_UnicodeEncodeError_type = pynull()
-unsafe_pyexc_UnicodeEncodeError_type() = unsafe_cacheget!(_pyexc_UnicodeEncodeError_type) do; unsafe_load(cglobal((:PyExc_UnicodeEncodeError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_UnicodeEncodeError_type() = unsafe_cacheget!(_pyexc_UnicodeEncodeError_type) do; unsafe_load(cglobal((:PyExc_UnicodeEncodeError, PYLIB), PyPtr)); end
 pyexc_UnicodeEncodeError_type(args...; kwargs...) = safe(unsafe_pyexc_UnicodeEncodeError_type(args...; kwargs...))
 export pyexc_UnicodeEncodeError_type
 
@@ -2332,7 +2370,7 @@ pyerror_occurred_UnicodeEncodeError() = pyerror_occurred(unsafe_pyexc_UnicodeEnc
 export pyerror_occurred_UnicodeEncodeError
 
 const _pyexc_UnicodeDecodeError_type = pynull()
-unsafe_pyexc_UnicodeDecodeError_type() = unsafe_cacheget!(_pyexc_UnicodeDecodeError_type) do; unsafe_load(cglobal((:PyExc_UnicodeDecodeError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_UnicodeDecodeError_type() = unsafe_cacheget!(_pyexc_UnicodeDecodeError_type) do; unsafe_load(cglobal((:PyExc_UnicodeDecodeError, PYLIB), PyPtr)); end
 pyexc_UnicodeDecodeError_type(args...; kwargs...) = safe(unsafe_pyexc_UnicodeDecodeError_type(args...; kwargs...))
 export pyexc_UnicodeDecodeError_type
 
@@ -2343,7 +2381,7 @@ pyerror_occurred_UnicodeDecodeError() = pyerror_occurred(unsafe_pyexc_UnicodeDec
 export pyerror_occurred_UnicodeDecodeError
 
 const _pyexc_UnicodeTranslateError_type = pynull()
-unsafe_pyexc_UnicodeTranslateError_type() = unsafe_cacheget!(_pyexc_UnicodeTranslateError_type) do; unsafe_load(cglobal((:PyExc_UnicodeTranslateError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_UnicodeTranslateError_type() = unsafe_cacheget!(_pyexc_UnicodeTranslateError_type) do; unsafe_load(cglobal((:PyExc_UnicodeTranslateError, PYLIB), PyPtr)); end
 pyexc_UnicodeTranslateError_type(args...; kwargs...) = safe(unsafe_pyexc_UnicodeTranslateError_type(args...; kwargs...))
 export pyexc_UnicodeTranslateError_type
 
@@ -2354,7 +2392,7 @@ pyerror_occurred_UnicodeTranslateError() = pyerror_occurred(unsafe_pyexc_Unicode
 export pyerror_occurred_UnicodeTranslateError
 
 const _pyexc_ValueError_type = pynull()
-unsafe_pyexc_ValueError_type() = unsafe_cacheget!(_pyexc_ValueError_type) do; unsafe_load(cglobal((:PyExc_ValueError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_ValueError_type() = unsafe_cacheget!(_pyexc_ValueError_type) do; unsafe_load(cglobal((:PyExc_ValueError, PYLIB), PyPtr)); end
 pyexc_ValueError_type(args...; kwargs...) = safe(unsafe_pyexc_ValueError_type(args...; kwargs...))
 export pyexc_ValueError_type
 
@@ -2365,7 +2403,7 @@ pyerror_occurred_ValueError() = pyerror_occurred(unsafe_pyexc_ValueError_type())
 export pyerror_occurred_ValueError
 
 const _pyexc_ZeroDivisionError_type = pynull()
-unsafe_pyexc_ZeroDivisionError_type() = unsafe_cacheget!(_pyexc_ZeroDivisionError_type) do; unsafe_load(cglobal((:PyExc_ZeroDivisionError, PYLIB), Ptr{CPyObject})); end
+unsafe_pyexc_ZeroDivisionError_type() = unsafe_cacheget!(_pyexc_ZeroDivisionError_type) do; unsafe_load(cglobal((:PyExc_ZeroDivisionError, PYLIB), PyPtr)); end
 pyexc_ZeroDivisionError_type(args...; kwargs...) = safe(unsafe_pyexc_ZeroDivisionError_type(args...; kwargs...))
 export pyexc_ZeroDivisionError_type
 

@@ -10,3 +10,6 @@ unsafe_pystr(o::AbstractString) =
     unsafe_pystr(convert(String, o))
 unsafe_pystr(o::Symbol) =
     unsafe_pystr(string(o))
+
+unsafe_pystr_convert(::Type{T}, o) where {T} =
+    convert(ValueOrError{T}, unsafe_pystr_asjuliastring(o))

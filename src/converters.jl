@@ -2,7 +2,6 @@ abstract type AbstractPyConverter{T} end
 
 AbstractPyConverter(c::AbstractPyConverter) = c
 AbstractPyConverter(::Type{PyObject}) = IdPyConverter()
-AbstractPyConverter(::Type{ConcretePyObject}) = IdPyConverter()
 AbstractPyConverter(::Type{Symbol}) = SymbolPyConverter()
 AbstractPyConverter(::Type{T}) where {T<:Integer} = IntPyConverter{T}()
 AbstractPyConverter(::Type{T}) where {T<:AbstractString} = StrPyConverter{T}()
@@ -12,9 +11,9 @@ AbstractPyConverter(::Type{T}) where {T<:Rational} = FractionPyConverter{T}()
 PyObject(c::AbstractPyConverter{T}, o::T) where {T} = error("not implemented")
 PyObject(c::AbstractPyConverter{T}, o) where {T} = PyObject(c, convert(T, o))
 
-struct IdPyConverter <: AbstractPyConverter{ConcretePyObject} end
-PyObject(::IdPyConverter, o::ConcretePyObject) = o
-pyconvert(::IdPyConverter, o::PyObject) = convert(ConcretePyObject, o)
+struct IdPyConverter <: AbstractPyConverter{PyObject} end
+PyObject(::IdPyConverter, o::PyObject) = o
+pyconvert(::IdPyConverter, o::PyObject) = convert(PyObject, o)
 
 struct SymbolPyConverter <: AbstractPyConverter{Symbol} end
 PyObject(::SymbolPyConverter, o::Symbol) = pystr(o)

@@ -4,9 +4,10 @@
 A Julia array wrapping the Python object `o` satisfying the `numpy` array interface.
 """
 struct PyArray{T,N} <: AbstractArray{T,N}
-    parent :: ConcretePyObject
-    ptr :: Ptr{T}
-    mutable :: Bool
+    parent :: PyObject # the object being wrapped
+    handle :: PyObject # an object required to keep the underlying memory valid
+    ptr :: Ptr{T}      # pointer to the memory
+    mutable :: Bool    # TODO: make this a type parameter?
     size :: NTuple{N, Int}
     length :: Int
     byte_strides :: NTuple{N, Int}
@@ -31,7 +32,7 @@ function PyArray(::Type{T}, ::Val{N}, o::PyObject, info::NamedTuple=pyarray_get_
         r == 0 || error("strides must be a multiple of the element size")
         q
     end
-    PyArray{T,N}(o, ptr, mutable, _size, _length, byte_strides, el_strides)
+    PyArray{T,N}(o, info.handle, ptr, mutable, _size, _length, byte_strides, el_strides)
 end
 
 PyArray(::Type{T}, o::PyObject, info::NamedTuple=pyarray_get_info(o)) where {T} =
@@ -84,8 +85,8 @@ function pyarray_get_info(::Val{:array_interface}, o::PyObject)
                 eltype = Bool
             end
         elseif typechar == 'O'
-            if elsize == sizeof(Ptr{CPyObject})
-                eltype = Ptr{CPyObject}
+            if elsize == sizeof(PyPtr)
+                eltype = PyPtr
             end
         elseif typechar == 'f'
             if elsize == 8
@@ -157,7 +158,7 @@ function pyarray_get_info(::Val{:array_interface}, o::PyObject)
     pyisnone(_mask) || error("masked arrays not supported")
 
     # done
-    (ptr=ptr, mutable=mutable, elsize=elsize, eltype=eltype, size=size, strides=strides)
+    (handle=a, ptr=ptr, mutable=mutable, elsize=elsize, eltype=eltype, size=size, strides=strides)
 end
 
 # ARRAY INTERFACE

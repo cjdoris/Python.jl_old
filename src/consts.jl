@@ -101,7 +101,7 @@ Base.@kwdef struct CPyNumberMethodsStruct
     inplace_truedivide :: Ptr{Cvoid} = C_NULL # (o,o)->o
     index :: Ptr{Cvoid} = C_NULL # (o)->o
     matrixmultiply :: Ptr{Cvoid} = C_NULL # (o,o)->o
-    imatrixmultiply :: Ptr{Cvoid} = C_NULL # (o,o)->o
+    inplace_matrixmultiply :: Ptr{Cvoid} = C_NULL # (o,o)->o
 end
 
 Base.@kwdef struct CPySequenceMethodsStruct
@@ -181,6 +181,8 @@ end
 
 abstract type AbstractCPyVarObject <: AbstractCPyObject end
 
+const PyPtr = Ptr{CPyObject}
+
 """
     CPyVarObject
 
@@ -242,8 +244,8 @@ Base.@kwdef struct CPyTypeObject <: AbstractCPyTypeObject
     methods :: Ptr{CPyMethodDefStruct} = C_NULL
     members :: Ptr{CPyMemberDefStruct} = C_NULL
     getset :: Ptr{CPyGetSetDefStruct} = C_NULL
-    base :: Ptr{CPyObject} = C_NULL
-    dict :: Ptr{CPyObject} = C_NULL
+    base :: PyPtr = C_NULL
+    dict :: PyPtr = C_NULL
     descr_get :: Ptr{Cvoid} = C_NULL
     descr_set :: Ptr{Cvoid} = C_NULL
     dictoffset :: CPy_ssize_t = 0
@@ -252,11 +254,11 @@ Base.@kwdef struct CPyTypeObject <: AbstractCPyTypeObject
     new :: Ptr{Cvoid} = C_NULL
     free :: Ptr{Cvoid} = C_NULL
     is_gc :: Ptr{Cvoid} = C_NULL
-    bases :: Ptr{CPyObject} = C_NULL
-    mro :: Ptr{CPyObject} = C_NULL
-    cache :: Ptr{CPyObject} = C_NULL
-    subclasses :: Ptr{CPyObject} = C_NULL
-    weaklist :: Ptr{CPyObject} = C_NULL
+    bases :: PyPtr = C_NULL
+    mro :: PyPtr = C_NULL
+    cache :: PyPtr = C_NULL
+    subclasses :: PyPtr = C_NULL
+    weaklist :: PyPtr = C_NULL
     del :: Ptr{Cvoid} = C_NULL
 
     version_tag :: Cuint = 0

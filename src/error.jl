@@ -14,9 +14,9 @@ function pyerror_occurred(t::PyObject)
 end
 
 struct PythonException <: Exception
-    t :: ConcretePyObject
-    v :: ConcretePyObject
-    b :: ConcretePyObject
+    t :: PyObject
+    v :: PyObject
+    b :: PyObject
 end
 
 function pythrow()
@@ -25,9 +25,9 @@ function pythrow()
     b = Ref{Ptr{Cvoid}}()
     ccall((:PyErr_Fetch, PYLIB), Cvoid, (Ptr{Ptr{Cvoid}},Ptr{Ptr{Cvoid}},Ptr{Ptr{Cvoid}}), t, v, b)
     ccall((:PyErr_NormalizeException, PYLIB), Cvoid, (Ptr{Ptr{Cvoid}},Ptr{Ptr{Cvoid}},Ptr{Ptr{Cvoid}}), t, v, b)
-    to = unsafe_pyobj(PyObjRef(t[], false))
-    vo = unsafe_pyobj(PyObjRef(v[], false))
-    bo = unsafe_pyobj(PyObjRef(b[], false))
+    to = unsafe_pyobj(PyRef(t[], false))
+    vo = unsafe_pyobj(PyRef(v[], false))
+    bo = unsafe_pyobj(PyRef(b[], false))
     e = PythonException(to, vo, bo)
     throw(e)
 end

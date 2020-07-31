@@ -16,7 +16,21 @@ end
 iserr(o::ValueOrError) = o.iserr
 value(o::ValueOrError) = o.value
 
-safe(o) = iserr(o) ? pythrow() : value(o)
+Base.convert(::Type{ValueOrError}, x::ValueOrError) = x
+Base.convert(::Type{ValueOrError{T}}, x::ValueOrError{T}) where {T} = x
+Base.convert(::Type{ValueOrError{T}}, x::ValueOrError) where {T} =
+    x.iserr ? ValueOrError{T}() : ValueOrError{T}(x.value)
+
+macro safeor(o, err)
+    :(let o=$(esc(o)); iserr(o) ? $(esc(err)) : value(o); end)
+end
+
+macro safe(o)
+    :(@safeor $(esc(o)) $(esc(:(@goto error))))
+end
+
+safe(o) = @safeor o pythrow()
+
 
 struct ValueOrNothingOrError{T}
     iserr :: Bool
@@ -27,8 +41,37 @@ struct ValueOrNothingOrError{T}
     ValueOrNothingOrError{T}(value) where {T} = new{T}(false, false, convert(T, something(value)))
 end
 
+Base.convert(::Type{ValueOrNothingOrError}, x::ValueOrError{T}) where {T} =
+    Base.convert(ValueOrNothingOrError{T}, x)
+Base.convert(::Type{ValueOrNothingOrError{T}}, x::ValueOrError) where {T} =
+    iserr(x) ? ValueOrNothingOrError{T}() : ValueOrNothingOrError{T}(Some(x.value))
+Base.convert(::Type{ValueOrNothingOrError{T}}, x::ValueOrNothingOrError{T}) where {T} =
+    x
+Base.convert(::Type{ValueOrNothingOrError{T}}, x::ValueOrNothingOrError) where {T} =
+    x.iserr ? ValueOrNothingOrError{T}() : x.isnothing ? ValueOrNothingOrError{T}(nothing) : ValueOrNothingOrError{T}(Some(x.value))
+
 iserr(o::ValueOrNothingOrError) = o.iserr
 value(o::ValueOrNothingOrError) = o.isnothing ? nothing : Some(o.value)
+
+"""
+    pointer_from_obj(o)
+
+A pair `(p,c)` so that `Base.unsafe_pointer_to_objref(p)===o`, provided that `c` is not garbage collected.
+"""
+function pointer_from_obj(o)
+    if isimmutable(o)
+        c = Ref{Any}(o)
+        p = unsafe_load(Ptr{Ptr{Cvoid}}(Base.pointer_from_objref(c)))
+    else
+        c = o
+        p = Base.pointer_from_objref(o)
+    end
+    p, c
+end
+
+@generated function cfunction(func, ::Type{R}, ::Type{T}) where {R,T}
+    :(@cfunction($(Expr(:$, :func)), $R, ($(T.parameters...),)))
+end
 
 
 # macro cpycall(ex)
@@ -77,7 +120,7 @@ value(o::ValueOrNothingOrError) = o.isnothing ? nothing : Some(o.value)
 
 # macro cpyobjectptr(name)
 #     quote
-#         CPyBorrowedPtr(unsafe_load(cglobal(($(esc(name)), PYLIB), Ptr{CPyObject})))
+#         CPyBorrowedPtr(unsafe_load(cglobal(($(esc(name)), PYLIB), PyPtr)))
 #     end
 # end
 

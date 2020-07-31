@@ -8,7 +8,7 @@ A Julia dictionary wrapping the Python dictionary `o` (or anything satisfying th
 struct PyDict{K, V, KC<:AbstractPyConverter{K}, VC<:AbstractPyConverter{V}} <: AbstractDict{K, V}
     keyconverter :: KC
     valconverter :: VC
-    parent :: ConcretePyObject
+    parent :: PyObject
 end
 PyDict(K=PyObject, V=PyObject, o::PyObject=pydict()) =
     PyDict(AbstractPyConverter(K), AbstractPyConverter(V), o)
