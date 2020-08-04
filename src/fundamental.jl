@@ -10,6 +10,7 @@ abstract type AbstractPyObject{T} <: AbstractPyRef{T} end
 
 PyRef(o::AbstractPyObject) = getfield(o, :ref)
 ptr(o::AbstractPyObject) = ptr(PyRef(o))
+nullify!(o::AbstractPyObject) = (nullify!(PyRef(o)); o)
 
 function unsafe_cacheget!(f, o::AbstractPyObject)
     if isnull(o)
@@ -41,6 +42,9 @@ const PYNULL = pynull()
 const PyFloatLike = Union{Float16,Float32,Float64}
 const PyComplexLike = Complex{T} where {T<:PyFloatLike}
 
+const AnyRational = Union{Rational, Integer}
+const AnyComplex = Union{Complex, Real}
+
 unsafe_pyobj(o::PyObject) = o
 unsafe_pyobj(o::PyRef) = PyObject(o, false)
 unsafe_pyobj(o::AbstractPyRef) = unsafe_pyobj(PyRef(o))
@@ -55,6 +59,7 @@ unsafe_pyobj(o::AbstractRange{<:Integer}) = unsafe_pyrange(o)
 unsafe_pyobj(o::Time) = unsafe_pytime(o)
 unsafe_pyobj(o::Date) = unsafe_pydate(o)
 unsafe_pyobj(o::DateTime) = unsafe_pydatetime(o)
+unsafe_pyobj(o::IO) = unsafe_pybufferedio(o)
 unsafe_pyobj(o) = unsafe_pyjulia(o)
 
 PyObject(o::PyObject) = o

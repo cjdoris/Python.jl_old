@@ -1,4 +1,5 @@
-pyis(o1, o2) = ptr(PyObject(o1)) == ptr(PyObject(o2))
+pyis(o1::AbstractPyRef, o2::AbstractPyRef) = ptr(o1) == ptr(o2)
+pyis(o1, o2) = false
 export pyis
 
 unsafe_pyrepr(::Type{String}, o) =
@@ -71,6 +72,8 @@ export pycall
 ### CONVERSION
 
 unsafe_pyconvert_quick(::Type{T}, o) where {T} = unsafe_pyconvert_quick(T, T, o)
+unsafe_pyconvert_quick(::Type{T}, o) where {T<:AbstractPyObject} = ValueOrNothingOrError{T}(Some(T(o)))
+
 function unsafe_pyconvert_quick(::Type{T}, ::Type{S}, o) where {T, S}
     r = unsafe_pyconvert_quick_rule(T, S, o) :: ValueOrNothingOrError{T}
     if S===Any || r.iserr || !r.isnothing
@@ -86,8 +89,8 @@ function unsafe_pyconvert_generic(T, o)
     mro = PyBorrowedRef(uptr(CPyTypeObject, uptr(CPyObject, o).type[]).mro[])
     len = ccall((:PyTuple_Size, PYLIB), CPy_ssize_t, (PyPtr,), mro)
     for i in 1:len
-        b = ccall((:PyTuple_GetItem, PYLIB), PyPtr, (PyPtr, CPy_ssize_t), mro, i-1)
-        name = Symbol(unsafe_string(uptr(CPyTypeObject, b).name[]))
+        b = PyBorrowedRef(ccall((:PyTuple_GetItem, PYLIB), PyPtr, (PyPtr, CPy_ssize_t), mro, i-1))
+        name = Symbol(_unsafe_pytype_getname(b))
         r = unsafe_pyconvert_generic(T, Val(name), o) :: ValueOrNothingOrError{T}
         if r.iserr || !r.isnothing
             return r
@@ -120,6 +123,21 @@ unsafe_pyconvert_generic_rule(::Type{Symbol}, ::Val{:str}, o) =
         r.iserr ? ValueOrNothingOrError{Symbol}() : ValueOrNothingOrError{Symbol}(Some(Symbol(r.value)))
     end
 
+function unsafe_pyconvert_generic_rule(::Type{T}, ::Val{Symbol("julia.Any")}, o) where {T}
+    x = unsafe_pyjulia_getvalue(o)
+    iserr(x) && return ValueOrNothingOrError{T}()
+    try
+        y = convert(T, value(x))
+        return ValueOrNothingOrError{T}(Some(y))
+    catch err
+        if err isa MethodError && err.f === convert && err.args === (T, value(x))
+            return ValueOrNothingOrError{T}(nothing)
+        else
+            rethrow()
+        end
+    end
+end
+
 function unsafe_pytryconvert(T::Union, o)
     R = ValueOrNothingOrError{T}
     a = unsafe_pytryconvert(T.a, o)
@@ -147,11 +165,18 @@ function unsafe_pytryconvert(::Type{T}, o) where {T}
         o = unsafe_pyobj(o)
         isnull(o) && return R()
     end
+    # quick conversion based only on the target type T
     r = unsafe_pyconvert_quick(T, o) :: ValueOrNothingOrError{T}
     r.iserr && return R()
     r.isnothing || return R(Some(r.value))
+    # generic conversion that uses the MRO of the type of o
     r = unsafe_pyconvert_generic(T, o) :: ValueOrNothingOrError{T}
-    return r
+    r.iserr && return R()
+    r.isnothing || return R(Some(r.value))
+    # pyconvert(Any, o) always works
+    T === Any && return R(Some(o))
+    # nothing worked
+    return R(nothing)
 end
 function unsafe_pyconvert(::Type{T}, o) where {T}
     R = ValueOrError{T}
@@ -183,9 +208,9 @@ unsafe_pyconvertvalue(o, k, vo) = unsafe_pyconvertvalue(o, vo)
 
 @generated unsafe_pyconvertvalue(o, vo) =
     try
-        :(unsafe_pyconvert($(eltype(o)), ko))
+        :(unsafe_pyconvert($(eltype(o)), vo))
     catch
-        :(unsafe_pyconvert(Any, ko))
+        :(unsafe_pyconvert(Any, vo))
     end
 
 ### BASE
@@ -220,9 +245,9 @@ _getproperty(o, ::Val{Symbol("jl!r")}) = pyrepr(String, o)
 _getproperty(o, ::Val{Symbol("jl!i")}) = pyint_convert(Int, pyint(o))
 _getproperty(o, ::Val{Symbol("jl!u")}) = pyint_convert(UInt, pyint(o))
 _getproperty(o, ::Val{Symbol("jl!f")}) = pyfloat_convert(Float64, pyfloat(o))
-_getproperty(o, ::Val{Symbol("jl!list")}) = (args...)->PyList(args..., o)
-_getproperty(o, ::Val{Symbol("jl!dict")}) = (args...)->PyDict(args..., o)
-_getproperty(o, ::Val{Symbol("jl!array")}) = (args...)->PyArray(args..., o)
+_getproperty(o, ::Val{Symbol("jl!list")}) = (args...)->PyList(o, args...)
+_getproperty(o, ::Val{Symbol("jl!dict")}) = (args...)->PyDict(o, args...)
+_getproperty(o, ::Val{Symbol("jl!array")}) = (args...)->PyArray(o, args...)
 
 Base.setproperty!(o::PyObject, a::Symbol, v) =
     pysetattr(o, a, v)

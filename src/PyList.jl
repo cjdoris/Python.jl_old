@@ -1,16 +1,17 @@
 """
-    PyList([T,] [o])
+    PyList([o], [T])
 
 A Julia vector wrapping the Python list `o` (or anything satisfying the sequence interface).
 
 `T` can be a type or a `AbstractPyConverter`, and specifies the element type and conversion policy.
 """
 struct PyList{T, TC<:AbstractPyConverter{T}} <: AbstractVector{T}
-    elconverter :: TC
     parent :: PyObject
+    elconverter :: TC
 end
-PyList(T=PyObject, o::PyObject=pylist()) = PyList(AbstractPyConverter(T), o)
-PyList(o::PyObject) = PyList(PyObject, o)
+PyList(o=pylist(), T::PyConverterLike=PyObject) = PyList(PyObject(o), AbstractPyConverter(T))
+PyList(T::PyConverterLike) = PyList(pylist(), T)
+PyList{T}(o) where {T} = PyList(o, T)
 export PyList
 
 unsafe_pyobj(x::PyList) = x.parent

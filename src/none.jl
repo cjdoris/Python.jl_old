@@ -1,2 +1,2 @@
-pyisnone(o::PyObject) = pyis(o, pynone())
+pyisnone(o::AbstractPyRef) = pyis(o, pynone())
 export pyisnone

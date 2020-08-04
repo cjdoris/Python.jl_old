@@ -17,3 +17,7 @@ function unsafe_pybytes_asjuliastring(o)
         return R(unsafe_string(value(x)...))
     end
 end
+
+function unsafe_pybytes(x::Vector{T}) where {T<:Union{UInt8,Int8}}
+    return unsafe_pyobj(PyRef(ccall((:PyBytes_FromStringAndSize, PYLIB), PyPtr, (Ptr{Cvoid}, CPy_ssize_t), x, sizeof(x)), false))
+end

@@ -9,8 +9,8 @@ Subtypes include `PyRef`, `PyBorrowedRef`, `AbstractPyObject` and `PyObject`.
 """
 abstract type AbstractPyRef{T<:AbstractCPyObject} end
 
-decref(o::AbstractPyRef) = (ccall((:Py_DecRef, PYLIB), Cvoid, (PyPtr,), ptr(o)); o)
-incref(o::AbstractPyRef) = (ccall((:Py_IncRef, PYLIB), Cvoid, (PyPtr,), ptr(o)); o)
+decref!(o::AbstractPyRef) = (ccall((:Py_DecRef, PYLIB), Cvoid, (PyPtr,), ptr(o)); o)
+incref!(o::AbstractPyRef) = (ccall((:Py_IncRef, PYLIB), Cvoid, (PyPtr,), ptr(o)); o)
 refcnt(o::AbstractPyRef) = uptr(CPyObject, o).refcnt[]
 iserr(o::AbstractPyRef) = isnull(o)
 value(o::AbstractPyRef) = o
@@ -27,8 +27,8 @@ mutable struct PyRef <: AbstractPyRef{CPyObject}
     ptr :: PyPtr
     function PyRef(p::Ptr, isborrowed::Bool)
         r = new(PyPtr(p))
-        isborrowed && incref(r)
-        finalizer(decref, r)
+        isborrowed && incref!(r)
+        finalizer(nullify!, r)
         return r
     end
 end
@@ -41,7 +41,9 @@ PyRef() = PyRef(C_NULL, false)
 ptr(o::PyRef) = o.ptr
 
 setptr!(o::PyRef, ptr::Ptr, isborrowed::Bool) =
-    (decref(o); o.ptr = ptr; isborrowed && incref(o); o)
+    (decref!(o); o.ptr = ptr; isborrowed && incref!(o); o)
+
+nullify!(o::PyRef) = setptr!(o, C_NULL, false)
 
 """
     PyBorrowedRef(ptr)

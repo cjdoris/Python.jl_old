@@ -18,6 +18,7 @@ include("import.jl")
 # abstract interfaces
 include("iter.jl")
 include("number.jl")
+include("buffer.jl")
 # numeric objects
 include("bool.jl")
 include("int.jl")
@@ -39,7 +40,10 @@ include("slice.jl")
 include("builtins.jl")
 include("datetime.jl")
 include("fractions.jl")
+include("abc.jl")
+include("io.jl")
 # new python types
+include("arg.jl")
 include("newtype.jl")
 include("julia.jl")
 # wrapper types providing Julia semantics around Python objects

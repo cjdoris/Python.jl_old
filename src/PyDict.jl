@@ -1,21 +1,22 @@
 """
-    PyDict([[K, [V,]] [o])
+    PyDict([o], [K, [V]])
+    PyDict{[K, [V]]}([o])
 
 A Julia dictionary wrapping the Python dictionary `o` (or anything satisfying the mapping interface).
 
 `K` and `V` can be types or `AbstractPyConverter`s, and specify the key and value types and conversion policy.
 """
 struct PyDict{K, V, KC<:AbstractPyConverter{K}, VC<:AbstractPyConverter{V}} <: AbstractDict{K, V}
+    parent :: PyObject
     keyconverter :: KC
     valconverter :: VC
-    parent :: PyObject
 end
-PyDict(K=PyObject, V=PyObject, o::PyObject=pydict()) =
-    PyDict(AbstractPyConverter(K), AbstractPyConverter(V), o)
-PyDict(K, o::PyObject) =
-    PyDict(K, PyObject, o)
-PyDict(o::PyObject) =
-    PyDict(PyObject, PyObject, o)
+PyDict(o=pydict(), K::PyConverterLike=PyObject, V::PyConverterLike=PyObject) =
+    PyDict(PyObject(o), AbstractPyConverter(K), AbstractPyConverter(V))
+PyDict(K::PyConverterLike, V::PyConverterLike=PyObject) =
+    PyDict(pydict(), K, V)
+PyDict{K}(o=pydict()) where {K} = PyDict(o, K)
+PyDict{K,V}(o=pydict()) where {K,V} = PyDict(o, K, V)
 export PyDict
 
 unsafe_pyobj(d::PyDict) = d.parent

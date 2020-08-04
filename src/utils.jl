@@ -1,7 +1,7 @@
 ptr(p::Ptr) = p
 ptr(p::UnsafePtr) = ptr(pointer(p))
 
-uptr(T::Type, p) = UnsafePtr(T, ptr(p))
+uptr(T::Type, p) = UnsafePtr{T}(ptr(p))
 uptr(p) = UnsafePtr(ptr(p))
 
 isnull(p) = ptr(p) == C_NULL

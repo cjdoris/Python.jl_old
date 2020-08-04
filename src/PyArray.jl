@@ -1,11 +1,12 @@
 """
-    PyArray(..., o)
+    PyArray([o], [T], [Val(N)])
+    PyArray{[T, [N]]}([o])
 
 A Julia array wrapping the Python object `o` satisfying the `numpy` array interface.
 """
 struct PyArray{T,N} <: AbstractArray{T,N}
     parent :: PyObject # the object being wrapped
-    handle :: PyObject # an object required to keep the underlying memory valid
+    handle :: Any      # an object required to keep the underlying memory valid
     ptr :: Ptr{T}      # pointer to the memory
     mutable :: Bool    # TODO: make this a type parameter?
     size :: NTuple{N, Int}
@@ -13,19 +14,23 @@ struct PyArray{T,N} <: AbstractArray{T,N}
     byte_strides :: NTuple{N, Int}
     el_strides :: NTuple{N, Int}
 end
-export PyArray
+
+const PyVector{T} = PyArray{T,1}
+const PyMatrix{T} = PyArray{T,2}
+
+export PyArray, PyVector, PyMatrix
 
 # CONSTRUCTORS
 
-function PyArray(::Type{T}, ::Val{N}, o::PyObject, info::NamedTuple=pyarray_get_info(o)) where {T,N}
+function PyArray(o::PyObject, ::Type{T}, ::Val{N}, info::NamedTuple=pyarray_get_info(o)) where {T,N}
     Base.allocatedinline(T) || error("T must be allocated inline")
     ptr = info.ptr
     mutable = info.mutable
-    sizeof(T) == info.elsize || error("element size is incorrect (expected $(sizeof(T)), got $(info.elsize))")
-    length(info.size) == N || error("size is incorrect length (expected $N, got $(length(info.size)))")
+    sizeof(T) == info.elsize || error("element size is incorrect (expected sizeof(T)=$(sizeof(T)), got $(info.elsize))")
+    length(info.size) == N || error("size is incorrect length (expected N=$N, got $(length(info.size)))")
     _size = NTuple{N,Int}(info.size)
     _length = prod(_size)
-    length(info.strides) == N || error("strides is incorrect length (expected $N, got $(length(info.strides)))")
+    length(info.strides) == N || error("strides is incorrect length (expected N=$N, got $(length(info.strides)))")
     byte_strides = NTuple{N,Int}(info.strides)
     el_strides = map(byte_strides) do s
         q, r = fldmod(s, sizeof(T))
@@ -35,14 +40,20 @@ function PyArray(::Type{T}, ::Val{N}, o::PyObject, info::NamedTuple=pyarray_get_
     PyArray{T,N}(o, info.handle, ptr, mutable, _size, _length, byte_strides, el_strides)
 end
 
-PyArray(::Type{T}, o::PyObject, info::NamedTuple=pyarray_get_info(o)) where {T} =
-    PyArray(T, Val(length(info.size)), o, info)
+PyArray(o::PyObject, ::Type{T}, info::NamedTuple=pyarray_get_info(o)) where {T} =
+    PyArray(o, T, Val(length(info.size)), info)
 
-PyArray(::Val{N}, o::PyObject, info::NamedTuple=pyarray_get_info(o)) where {N} =
-    PyArray(info.eltype, Val(N), o, info)
+PyArray(o::PyObject, ::Val{N}, info::NamedTuple=pyarray_get_info(o)) where {N} =
+    PyArray(o, info.eltype, Val(N), info)
 
 PyArray(o::PyObject, info::NamedTuple=pyarray_get_info(o)) =
-    PyArray(info.eltype, Val(length(info.size)), o, info)
+    PyArray(o, info.eltype, Val(length(info.size)), info)
+
+PyArray{T}(o::PyObject) where {T} = PyArray(o, T)
+PyArray{T,N}(o::PyObject) where {T,N} = PyArray(o, T, Val(N))
+(::Type{PyArray{_T,N} where _T})(o::PyObject) where {N} = PyArray(o, Val(N))
+
+(::Type{A})(o, args...) where {A<:PyArray} = A(PyObject(o), args...)
 
 function pyarray_get_info(o::PyObject)
     if pyhasattr(o, "__array_interface__")

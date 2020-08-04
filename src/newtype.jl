@@ -120,19 +120,19 @@ newpymappingmethods(x::NamedTuple) = newpymappingmethods(; x...)
 function pytypeflags(; stackless=PYISSTACKLESS, versiontag=false, getcharbuffer=false, sequencein=false, inplaceops=false, richcompare=false, weakrefs=false, iter=false, class=false, index=false, basetype=false)
     flags = UInt64(0)
     if PYVERSION.major ≥ 3
-        versiontag    && (flags |= Py_TPFLAGS_HAVE_VERSION_TAG)
+        versiontag    && (flags |= CPy_TPFLAGS_HAVE_VERSION_TAG)
     else
-        getcharbuffer && (flags |= Py_TPFLAGS_HAVE_GETCHARBUFFER)
-        sequencein    && (flags |= Py_TPFLAGS_HAVE_SEQUENCE_IN)
-        inplaceops    && (flags |= Py_TPFLAGS_HAVE_INPLACEOPS)
-        richcompare   && (flags |= Py_TPFLAGS_HAVE_RICHCOMPARE)
-        weakrefs      && (flags |= Py_TPFLAGS_HAVE_WEAKREFS)
-        iter          && (flags |= Py_TPFLAGS_HAVE_ITER)
-        class         && (flags |= Py_TPFLAGS_HAVE_CLASS)
-        index         && (flags |= Py_TPFLAGS_HAVE_INDEX)
+        getcharbuffer && (flags |= CPy_TPFLAGS_HAVE_GETCHARBUFFER)
+        sequencein    && (flags |= CPy_TPFLAGS_HAVE_SEQUENCE_IN)
+        inplaceops    && (flags |= CPy_TPFLAGS_HAVE_INPLACEOPS)
+        richcompare   && (flags |= CPy_TPFLAGS_HAVE_RICHCOMPARE)
+        weakrefs      && (flags |= CPy_TPFLAGS_HAVE_WEAKREFS)
+        iter          && (flags |= CPy_TPFLAGS_HAVE_ITER)
+        class         && (flags |= CPy_TPFLAGS_HAVE_CLASS)
+        index         && (flags |= CPy_TPFLAGS_HAVE_INDEX)
     end
-    basetype          && (flags |= Py_TPFLAGS_BASETYPE)
-    stackless         && (flags |= Py_TPFLAGS_HAVE_STACKLESS_EXTENSION)
+    basetype          && (flags |= CPy_TPFLAGS_BASETYPE)
+    stackless         && (flags |= CPy_TPFLAGS_HAVE_STACKLESS_EXTENSION)
     return flags
 end
 pytypeflags(x::Integer) = x

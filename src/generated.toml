@@ -46,9 +46,7 @@ cfunc = "PyObject_IsInstance O O B"
 
 [pyobjecttype]
 cachedobj = {cobj="PyBaseObject_Type"}
-
-[pyobject]
-defer = "pyobjecttype"
+caller = "pyobject"
 
 [pyhash]
 cfunc = "PyObject_Hash O !CPy_hash_t"
@@ -72,17 +70,17 @@ cfunc = "PyObject_DelItem O O V"
 
 [pytypetype]
 cachedobj = {cobj="PyType_Type"}
+caller = "pytype"
 
-[pytype]
-defer = "pytypetype"
+[pyistype]
+typechecks_fast = "CPy_TPFLAGS_TYPE_SUBCLASS"
 
 ### SUPER
 
 [pysupertype]
 cachedobj = {cobj="PySuper_Type"}
-
-[pysuper]
-defer = "pysupertype"
+caller = "pysuper"
+typechecker = "pyissuper"
 
 ### NONE
 
@@ -110,6 +108,191 @@ unsafe = false
 cfunc = "PyErr_GivenExceptionMatches ?O ?O =B"
 unsafe = false
 
+[pyisexception]
+typechecks_fast = "CPy_TPFLAGS_BASE_EXC_SUBCLASS"
+
+### EXCEPTIONS
+
+[pyexc_BaseException_type]
+cachedobj = {cobjptr="PyExc_BaseException"}
+errsetter = "pyerror_set_BaseException"
+errchecker = "pyerror_occurred_BaseException"
+
+[pyexc_Exception_type]
+cachedobj = {cobjptr="PyExc_Exception"}
+errsetter = "pyerror_set_Exception"
+errchecker = "pyerror_occurred_Exception"
+
+[pyexc_StopIteration_type]
+cachedobj = {cobjptr="PyExc_StopIteration"}
+errsetter = "pyerror_set_StopIteration"
+errchecker = "pyerror_occurred_StopIteration"
+
+[pyexc_GeneratorExit_type]
+cachedobj = {cobjptr="PyExc_GeneratorExit"}
+errsetter = "pyerror_set_GeneratorExit"
+errchecker = "pyerror_occurred_GeneratorExit"
+
+[pyexc_ArithmeticError_type]
+cachedobj = {cobjptr="PyExc_ArithmeticError"}
+errsetter = "pyerror_set_ArithmeticError"
+errchecker = "pyerror_occurred_ArithmeticError"
+
+[pyexc_LookupError_type]
+cachedobj = {cobjptr="PyExc_LookupError"}
+errsetter = "pyerror_set_LookupError"
+errchecker = "pyerror_occurred_LookupError"
+
+[pyexc_AssertionError_type]
+cachedobj = {cobjptr="PyExc_AssertionError"}
+errsetter = "pyerror_set_AssertionError"
+errchecker = "pyerror_occurred_AssertionError"
+
+[pyexc_AttributeError_type]
+cachedobj = {cobjptr="PyExc_AttributeError"}
+errsetter = "pyerror_set_AttributeError"
+errchecker = "pyerror_occurred_AttributeError"
+
+[pyexc_BufferError_type]
+cachedobj = {cobjptr="PyExc_BufferError"}
+errsetter = "pyerror_set_BufferError"
+errchecker = "pyerror_occurred_BufferError"
+
+[pyexc_EOFError_type]
+cachedobj = {cobjptr="PyExc_EOFError"}
+errsetter = "pyerror_set_EOFError"
+errchecker = "pyerror_occurred_EOFError"
+
+[pyexc_FloatingPointError_type]
+cachedobj = {cobjptr="PyExc_FloatingPointError"}
+errsetter = "pyerror_set_FloatingPointError"
+errchecker = "pyerror_occurred_FloatingPointError"
+
+[pyexc_OSError_type]
+cachedobj = {cobjptr="PyExc_OSError"}
+errsetter = "pyerror_set_OSError"
+errchecker = "pyerror_occurred_OSError"
+
+[pyexc_ImportError_type]
+cachedobj = {cobjptr="PyExc_ImportError"}
+errsetter = "pyerror_set_ImportError"
+errchecker = "pyerror_occurred_ImportError"
+
+[pyexc_IndexError_type]
+cachedobj = {cobjptr="PyExc_IndexError"}
+errsetter = "pyerror_set_IndexError"
+errchecker = "pyerror_occurred_IndexError"
+
+[pyexc_KeyError_type]
+cachedobj = {cobjptr="PyExc_KeyError"}
+errsetter = "pyerror_set_KeyError"
+errchecker = "pyerror_occurred_KeyError"
+
+[pyexc_KeyboardInterrupt_type]
+cachedobj = {cobjptr="PyExc_KeyboardInterrupt"}
+errsetter = "pyerror_set_KeyboardInterrupt"
+errchecker = "pyerror_occurred_KeyboardInterrupt"
+
+[pyexc_MemoryError_type]
+cachedobj = {cobjptr="PyExc_MemoryError"}
+errsetter = "pyerror_set_MemoryError"
+errchecker = "pyerror_occurred_MemoryError"
+
+[pyexc_NameError_type]
+cachedobj = {cobjptr="PyExc_NameError"}
+errsetter = "pyerror_set_NameError"
+errchecker = "pyerror_occurred_NameError"
+
+[pyexc_OverflowError_type]
+cachedobj = {cobjptr="PyExc_OverflowError"}
+errsetter = "pyerror_set_OverflowError"
+errchecker = "pyerror_occurred_OverflowError"
+
+[pyexc_RuntimeError_type]
+cachedobj = {cobjptr="PyExc_RuntimeError"}
+errsetter = "pyerror_set_RuntimeError"
+errchecker = "pyerror_occurred_RuntimeError"
+
+[pyexc_NotImplementedError_type]
+cachedobj = {cobjptr="PyExc_NotImplementedError"}
+errsetter = "pyerror_set_NotImplementedError"
+errchecker = "pyerror_occurred_NotImplementedError"
+
+[pyexc_SyntaxError_type]
+cachedobj = {cobjptr="PyExc_SyntaxError"}
+errsetter = "pyerror_set_SyntaxError"
+errchecker = "pyerror_occurred_SyntaxError"
+
+[pyexc_IndentationError_type]
+cachedobj = {cobjptr="PyExc_IndentationError"}
+errsetter = "pyerror_set_IndentationError"
+errchecker = "pyerror_occurred_IndentationError"
+
+[pyexc_TabError_type]
+cachedobj = {cobjptr="PyExc_TabError"}
+errsetter = "pyerror_set_TabError"
+errchecker = "pyerror_occurred_TabError"
+
+[pyexc_ReferenceError_type]
+cachedobj = {cobjptr="PyExc_ReferenceError"}
+errsetter = "pyerror_set_ReferenceError"
+errchecker = "pyerror_occurred_ReferenceError"
+
+[pyexc_SystemError_type]
+cachedobj = {cobjptr="PyExc_SystemError"}
+errsetter = "pyerror_set_SystemError"
+errchecker = "pyerror_occurred_SystemError"
+
+[pyexc_SystemExit_type]
+cachedobj = {cobjptr="PyExc_SystemExit"}
+errsetter = "pyerror_set_SystemExit"
+errchecker = "pyerror_occurred_SystemExit"
+
+[pyexc_TypeError_type]
+cachedobj = {cobjptr="PyExc_TypeError"}
+errsetter = "pyerror_set_TypeError"
+errchecker = "pyerror_occurred_TypeError"
+
+[pyexc_UnboundLocalError_type]
+cachedobj = {cobjptr="PyExc_UnboundLocalError"}
+errsetter = "pyerror_set_UnboundLocalError"
+errchecker = "pyerror_occurred_UnboundLocalError"
+
+[pyexc_UnicodeError_type]
+cachedobj = {cobjptr="PyExc_UnicodeError"}
+errsetter = "pyerror_set_UnicodeError"
+errchecker = "pyerror_occurred_UnicodeError"
+
+[pyexc_UnicodeEncodeError_type]
+cachedobj = {cobjptr="PyExc_UnicodeEncodeError"}
+errsetter = "pyerror_set_UnicodeEncodeError"
+errchecker = "pyerror_occurred_UnicodeEncodeError"
+
+[pyexc_UnicodeDecodeError_type]
+cachedobj = {cobjptr="PyExc_UnicodeDecodeError"}
+errsetter = "pyerror_set_UnicodeDecodeError"
+errchecker = "pyerror_occurred_UnicodeDecodeError"
+
+[pyexc_UnicodeTranslateError_type]
+cachedobj = {cobjptr="PyExc_UnicodeTranslateError"}
+errsetter = "pyerror_set_UnicodeTranslateError"
+errchecker = "pyerror_occurred_UnicodeTranslateError"
+
+[pyexc_ValueError_type]
+cachedobj = {cobjptr="PyExc_ValueError"}
+errsetter = "pyerror_set_ValueError"
+errchecker = "pyerror_occurred_ValueError"
+
+[pyexc_ZeroDivisionError_type]
+cachedobj = {cobjptr="PyExc_ZeroDivisionError"}
+errsetter = "pyerror_set_ZeroDivisionError"
+errchecker = "pyerror_occurred_ZeroDivisionError"
+
+[pyexc_IOUnsupportedOperation_type]
+cachedobj = {expr="""unsafe_pyimportattr("io", "UnsupportedOperation")"""}
+errsetter = "pyerror_set_IOUnsupportedOperation"
+errchecker = "pyerror_occurred_IOUnsupportedOperation"
+
 ### IMPORT
 
 [pyimport]
@@ -119,10 +302,13 @@ cfunc = ["PyImport_ImportModule S O", "PyImport_Import O O"]
 
 [pystrtype]
 cachedobj = {cobj="PyUnicode_Type"}
+caller = "pystr"
+
+[pyisstr]
+typechecks_fast = "CPy_TPFLAGS_UNICODE_SUBCLASS"
 
 [pystr]
 cfunc = "PyObject_Str O O"
-defer = "pystrtype"
 
 [pystr_asutf8string]
 cfunc = "PyUnicode_AsUTF8String O O"
@@ -136,10 +322,13 @@ safe = false
 
 [pybytestype]
 cachedobj = {cobj="PyBytes_Type"}
+caller = "pybytes"
+
+[pyisbytes]
+typechecks_fast = "CPy_TPFLAGS_BYTES_SUBCLASS"
 
 [pybytes]
 cfunc = "PyObject_Bytes O O"
-defer = "pybytestype"
 
 ### ITER
 
@@ -151,6 +340,8 @@ safe = false
 
 [pybooltype]
 cachedobj = {cobj="PyBool_Type"}
+caller = "pybool"
+typechecker = "pyisbool"
 
 [pytrue]
 cachedobj = {cobj="_Py_TrueStruct"}
@@ -158,17 +349,17 @@ cachedobj = {cobj="_Py_TrueStruct"}
 [pyfalse]
 cachedobj = {cobj="_Py_FalseStruct"}
 
-[pybool]
-defer = "pybooltype"
-
 ### INT
 
 [pyinttype]
 cachedobj = {cobj="PyLong_Type"}
+caller = "pyint"
+
+[pyisint]
+typechecks_fast = "CPy_TPFLAGS_LONG_SUBCLASS"
 
 [pyint]
 cfunc = "PyNumber_Long O O"
-defer = "pyinttype"
 
 [pyint_fromlonglong]
 cfunc = "PyLong_FromLongLong =Any/Clonglong O"
@@ -190,10 +381,11 @@ safe = false
 
 [pyfloattype]
 cachedobj = {cobj="PyFloat_Type"}
+caller = "pyfloat"
+typechecker = "pyisfloat"
 
 [pyfloat]
 cfunc = ["PyNumber_Float O O", "PyFloat_FromDouble =Real/Cdouble O"]
-defer = "pyfloattype"
 
 [pyfloat_asdouble]
 cfunc = "PyFloat_AsDouble O ?Cdouble"
@@ -203,10 +395,11 @@ safe = false
 
 [pycomplextype]
 cachedobj = {cobj="PyComplex_Type"}
+caller = "pycomplex"
+typechecker = "pyiscomplex"
 
 [pycomplex]
 cfunc = "PyComplex_FromDoubles =Real/Cdouble =Real/Cdouble O"
-defer = "pycomplextype"
 
 [pycomplex_realasdouble]
 cfunc = "PyComplex_RealAsDouble O ?Cdouble"
@@ -220,9 +413,10 @@ safe = false
 
 [pytupletype]
 cachedobj = {cobj="PyTuple_Type"}
+caller = "pytuple"
 
-[pytuple]
-defer = "pytupletype"
+[pyistuple]
+typechecks_fast = "CPy_TPFLAGS_TUPLE_SUBCLASS"
 
 [pytuple_new]
 cfunc = "PyTuple_New =Any/CPy_ssize_t O"
@@ -236,9 +430,10 @@ safe = false
 
 [pylisttype]
 cachedobj = {cobj="PyList_Type"}
+caller = "pylist"
 
-[pylist]
-defer = "pylisttype"
+[pyislist]
+typechecks_fast = "CPy_TPFLAGS_LIST_SUBCLASS"
 
 [pylist_new]
 cfunc = "PyList_New =Any/CPy_ssize_t O"
@@ -252,18 +447,20 @@ safe = false
 
 [pybytearraytype]
 cachedobj = {cobj="PyByteArray_Type"}
-
-[pybytearray]
-defer = "pybytearray"
+caller = "pybytearray"
+typechecker = "pyisbytearray"
 
 ### DICT
 
 [pydicttype]
 cachedobj = {cobj="PyDict_Type"}
+caller = "pydict"
+
+[pyisdict]
+typechecks_fast = "CPy_TPFLAGS_DICT_SUBCLASS"
 
 [pydict]
 cfunc = "PyDict_New O"
-defer = "pydicttype"
 
 [pydict_setitem]
 cfunc = "PyDict_SetItem O O O V"
@@ -277,15 +474,13 @@ safe = false
 
 [pysettype]
 cachedobj = {cobj="PySet_Type"}
-
-[pyset]
-defer = "pysettype"
+caller = "pyset"
+typechecker = "pyisset"
 
 [pyfrozensettype]
 cachedobj = {cobj="PyFrozenSet_Type"}
-
-[pyfrozenset]
-defer = "pyfrozensettype"
+caller = "pyfrozenset"
+typechecker = "pyisfrozenset"
 
 [pyset_new]
 cfunc = "PySet_New =Ptr/Ptr{Cvoid} O"
@@ -303,9 +498,8 @@ safe = false
 
 [pyslicetype]
 cachedobj = {cobj="PySlice_Type"}
-
-[pyslice]
-defer = "pyslicetype"
+caller = "pyslice"
+typechecker = "pyisslice"
 
 ### ELLIPSIS
 
@@ -322,82 +516,55 @@ cachedobj = {expr="pyimport(\"builtins\")"}
 
 [pyrangetype]
 cachedobj = {expr="unsafe_pybuiltin(\"range\")"}
-
-[pyrange]
-defer = "pyrangetype"
+caller = "pyrange"
+typechecker = "pyisrange"
 
 [pyhelpfunction]
 cachedobj = {expr="unsafe_pybuiltin(\"help\")"}
 export = false
-
-[pyhelp]
-defer = "pyhelpfunction"
+caller = "pyhelp"
 
 [pyevalfunction]
 cachedobj = {expr="unsafe_pybuiltin(\"eval\")"}
 export = false
-
-[pyeval]
-defer = "pyevalfunction"
+caller = "pyeval"
 
 [pyexecfunction]
 cachedobj = {expr="unsafe_pybuiltin(\"exec\")"}
 export = false
-
-[pyexec]
-defer = "pyexecfunction"
+caller = "pyexec"
 
 ### DATETIME
 
-[pydatetimemodule]
-cachedobj = {expr="pyimport(\"datetime\")"}
-
 [pydatetype]
-cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"date\")"}
-
-[pydate]
-defer = "pydatetype"
+cachedobj = {expr="""unsafe_pyimportattr("datetime", "date")"""}
+caller = "pydate"
 
 [pytimetype]
-cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"time\")"}
-
-[pytime]
-defer = "pytimetype"
+cachedobj = {expr="""unsafe_pyimportattr("datetime", "time")"""}
+caller = "pytime"
 
 [pydatetimetype]
-cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"datetime\")"}
-
-[pydatetime]
-defer = "pydatetimetype"
+cachedobj = {expr="""unsafe_pyimportattr("datetime", "datetime")"""}
+caller = "pydatetime"
 
 [pytimedeltatype]
-cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"timedelta\")"}
-
-[pytimedelta]
-defer = "pytimedeltatype"
+cachedobj = {expr="""unsafe_pyimportattr("datetime", "timedelta")"""}
+caller = "pytimedelta"
 
 [pytzinfotype]
-cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"tzinfo\")"}
-
-[pytzinfo]
-defer = "pytzinfotype"
+cachedobj = {expr="""unsafe_pyimportattr("datetime", "tzinfo")"""}
+caller = "pytzinfo"
 
 [pytimezonetype]
-cachedobj = {expr="unsafe_pygetattr(pydatetimemodule(), \"timezone\")"}
-
-[pytimezone]
-defer = "pytimezonetype"
+cachedobj = {expr="""unsafe_pyimportattr("datetime", "timezone")"""}
+caller = "pytimezone"
 
 ### FRACTIONS
 
-[pyfractionsmodule]
-cachedobj = {expr="pyimport(\"fractions\")"}
-
 [pyfractiontype]
-cachedobj = {expr="unsafe_pygetattr(pyfractionsmodule(), \"Fraction\")"}
-
-[pyfraction]
-defer = "pyfractiontype"
+cachedobj = {expr="""unsafe_pyimportattr("fractions", "Fraction")"""}
+caller = "pyfraction"
 
 ### NUMBERS
 
@@ -511,3 +678,49 @@ cfunc = "PyNumber_InplaceOr O O O"
 
 [pyindex]
 cfunc = "PyNumber_Index O O"
+
+### IO
+
+[pyiobasetype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "IOBase")"""}
+
+[pyrawiobasetype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "RawIOBase")"""}
+
+[pybufferediobasetype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "BufferedIOBase")"""}
+
+[pytextiobasetype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "TextIOBase")"""}
+
+[pyfileiotype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "FileIO")"""}
+caller = "pyfileio"
+
+[pybytesiotype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "BytesIO")"""}
+caller = "pybytesio"
+
+[pybufferedreaderiotype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "BufferedReader")"""}
+caller = "pybufferedreaderio"
+
+[pybufferedwriteriotype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "BufferedWriter")"""}
+caller = "pybufferedwriterio"
+
+[pybufferedrandomiotype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "BufferedRandom")"""}
+caller = "pybufferedrandomio"
+
+[pybufferedrwiotype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "BufferedRW")"""}
+caller = "pybufferedrwio"
+
+[pytextiowrappertype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "TextIOWrapper")"""}
+caller = "pytextiowrapper"
+
+[pystringiotype]
+cachedobj = {expr="""unsafe_pyimportattr("io", "StringIO")"""}
+caller = "pystringio"

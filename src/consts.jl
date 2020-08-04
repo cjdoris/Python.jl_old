@@ -2,6 +2,54 @@ const CPy_hash_t = Cssize_t
 
 const CPy_ssize_t = Cssize_t
 
+Base.@kwdef struct CPyBufferProcs
+    getbuffer :: Ptr{Cvoid} # (o, Ptr{CPy_buffer}, Cint) -> Cint
+    releasebuffer :: Ptr{Cvoid} # (o, Ptr{CPy_buffer}) -> Cvoid
+end
+
+Base.@kwdef struct CPy_buffer
+    buf :: Ptr{Cvoid} = C_NULL
+    obj :: Ptr{Cvoid} = C_NULL
+    len :: CPy_ssize_t = 0
+    itemsize :: CPy_ssize_t = 0
+    readonly :: Cint = 0
+    ndim :: Cint = 0
+    format :: Cstring = C_NULL
+    shape :: Ptr{CPy_ssize_t} = C_NULL
+    strides :: Ptr{CPy_ssize_t} = C_NULL
+    suboffsets :: Ptr{CPy_ssize_t} = C_NULL
+    internal :: Ptr{Cvoid} = C_NULL
+end
+
+const CPyBUF_MAX_NDIM = 64
+
+# Flags for getting buffers
+const CPyBUF_SIMPLE = 0x0
+const CPyBUF_WRITABLE = 0x0001
+const CPyBUF_WRITEABLE = CPyBUF_WRITABLE
+const CPyBUF_FORMAT = 0x0004
+const CPyBUF_ND = 0x0008
+const CPyBUF_STRIDES = (0x0010 | CPyBUF_ND)
+const CPyBUF_C_CONTIGUOUS = (0x0020 | CPyBUF_STRIDES)
+const CPyBUF_F_CONTIGUOUS = (0x0040 | CPyBUF_STRIDES)
+const CPyBUF_ANY_CONTIGUOUS = (0x0080 | CPyBUF_STRIDES)
+const CPyBUF_INDIRECT = (0x0100 | CPyBUF_STRIDES)
+
+const CPyBUF_CONTIG = (CPyBUF_ND | CPyBUF_WRITABLE)
+const CPyBUF_CONTIG_RO = (CPyBUF_ND)
+
+const CPyBUF_STRIDED = (CPyBUF_STRIDES | CPyBUF_WRITABLE)
+const CPyBUF_STRIDED_RO = (CPyBUF_STRIDES)
+
+const CPyBUF_RECORDS = (CPyBUF_STRIDES | CPyBUF_WRITABLE | CPyBUF_FORMAT)
+const CPyBUF_RECORDS_RO = (CPyBUF_STRIDES | CPyBUF_FORMAT)
+
+const CPyBUF_FULL = (CPyBUF_INDIRECT | CPyBUF_WRITABLE | CPyBUF_FORMAT)
+const CPyBUF_FULL_RO = (CPyBUF_INDIRECT | CPyBUF_FORMAT)
+
+const CPyBUF_READ = 0x100
+const CPyBUF_WRITE = 0x200
+
 @enum CPy_CompareOp::Cint CPy_LT=0 CPy_LE=1 CPy_EQ=2 CPy_NE=3 CPy_GT=4 CPy_GE=5
 
 Base.@kwdef struct CPy_complex
@@ -129,40 +177,40 @@ end
 # type-flag constants
 
 # Python 2.7
-const Py_TPFLAGS_HAVE_GETCHARBUFFER  = (0x00000001<<0)
-const Py_TPFLAGS_HAVE_SEQUENCE_IN = (0x00000001<<1)
-const Py_TPFLAGS_GC = 0 # was sometimes (0x00000001<<2) in Python <= 2.1
-const Py_TPFLAGS_HAVE_INPLACEOPS = (0x00000001<<3)
-const Py_TPFLAGS_CHECKTYPES = (0x00000001<<4)
-const Py_TPFLAGS_HAVE_RICHCOMPARE = (0x00000001<<5)
-const Py_TPFLAGS_HAVE_WEAKREFS = (0x00000001<<6)
-const Py_TPFLAGS_HAVE_ITER = (0x00000001<<7)
-const Py_TPFLAGS_HAVE_CLASS = (0x00000001<<8)
-const Py_TPFLAGS_HAVE_INDEX = (0x00000001<<17)
-const Py_TPFLAGS_HAVE_NEWBUFFER = (0x00000001<<21)
-const Py_TPFLAGS_STRING_SUBCLASS       = (0x00000001<<27)
+const CPy_TPFLAGS_HAVE_GETCHARBUFFER  = (0x00000001<<0)
+const CPy_TPFLAGS_HAVE_SEQUENCE_IN = (0x00000001<<1)
+const CPy_TPFLAGS_GC = 0 # was sometimes (0x00000001<<2) in Python <= 2.1
+const CPy_TPFLAGS_HAVE_INPLACEOPS = (0x00000001<<3)
+const CPy_TPFLAGS_CHECKTYPES = (0x00000001<<4)
+const CPy_TPFLAGS_HAVE_RICHCOMPARE = (0x00000001<<5)
+const CPy_TPFLAGS_HAVE_WEAKREFS = (0x00000001<<6)
+const CPy_TPFLAGS_HAVE_ITER = (0x00000001<<7)
+const CPy_TPFLAGS_HAVE_CLASS = (0x00000001<<8)
+const CPy_TPFLAGS_HAVE_INDEX = (0x00000001<<17)
+const CPy_TPFLAGS_HAVE_NEWBUFFER = (0x00000001<<21)
+const CPy_TPFLAGS_STRING_SUBCLASS       = (0x00000001<<27)
 
 # Python 3.0+ has only these:
-const Py_TPFLAGS_HEAPTYPE = (0x00000001<<9)
-const Py_TPFLAGS_BASETYPE = (0x00000001<<10)
-const Py_TPFLAGS_READY = (0x00000001<<12)
-const Py_TPFLAGS_READYING = (0x00000001<<13)
-const Py_TPFLAGS_HAVE_GC = (0x00000001<<14)
-const Py_TPFLAGS_HAVE_VERSION_TAG   = (0x00000001<<18)
-const Py_TPFLAGS_VALID_VERSION_TAG  = (0x00000001<<19)
-const Py_TPFLAGS_IS_ABSTRACT = (0x00000001<<20)
-const Py_TPFLAGS_INT_SUBCLASS         = (0x00000001<<23)
-const Py_TPFLAGS_LONG_SUBCLASS        = (0x00000001<<24)
-const Py_TPFLAGS_LIST_SUBCLASS        = (0x00000001<<25)
-const Py_TPFLAGS_TUPLE_SUBCLASS       = (0x00000001<<26)
-const Py_TPFLAGS_BYTES_SUBCLASS       = (0x00000001<<27)
-const Py_TPFLAGS_UNICODE_SUBCLASS     = (0x00000001<<28)
-const Py_TPFLAGS_DICT_SUBCLASS        = (0x00000001<<29)
-const Py_TPFLAGS_BASE_EXC_SUBCLASS    = (0x00000001<<30)
-const Py_TPFLAGS_TYPE_SUBCLASS        = (0x00000001<<31)
+const CPy_TPFLAGS_HEAPTYPE = (0x00000001<<9)
+const CPy_TPFLAGS_BASETYPE = (0x00000001<<10)
+const CPy_TPFLAGS_READY = (0x00000001<<12)
+const CPy_TPFLAGS_READYING = (0x00000001<<13)
+const CPy_TPFLAGS_HAVE_GC = (0x00000001<<14)
+const CPy_TPFLAGS_HAVE_VERSION_TAG   = (0x00000001<<18)
+const CPy_TPFLAGS_VALID_VERSION_TAG  = (0x00000001<<19)
+const CPy_TPFLAGS_IS_ABSTRACT = (0x00000001<<20)
+const CPy_TPFLAGS_INT_SUBCLASS         = (0x00000001<<23)
+const CPy_TPFLAGS_LONG_SUBCLASS        = (0x00000001<<24)
+const CPy_TPFLAGS_LIST_SUBCLASS        = (0x00000001<<25)
+const CPy_TPFLAGS_TUPLE_SUBCLASS       = (0x00000001<<26)
+const CPy_TPFLAGS_BYTES_SUBCLASS       = (0x00000001<<27)
+const CPy_TPFLAGS_UNICODE_SUBCLASS     = (0x00000001<<28)
+const CPy_TPFLAGS_DICT_SUBCLASS        = (0x00000001<<29)
+const CPy_TPFLAGS_BASE_EXC_SUBCLASS    = (0x00000001<<30)
+const CPy_TPFLAGS_TYPE_SUBCLASS        = (0x00000001<<31)
 
 # only use this if we have the stackless extension
-const Py_TPFLAGS_HAVE_STACKLESS_EXTENSION = (0x00000003<<15)
+const CPy_TPFLAGS_HAVE_STACKLESS_EXTENSION = (0x00000003<<15)
 
 ### Objects
 
@@ -224,7 +272,7 @@ Base.@kwdef struct CPyTypeObject <: AbstractCPyTypeObject
     getattro :: Ptr{Cvoid} = C_NULL
     setattro :: Ptr{Cvoid} = C_NULL
 
-    as_buffer :: Ptr{Cvoid} = C_NULL
+    as_buffer :: Ptr{CPyBufferProcs} = C_NULL
 
     flags :: Culong = 0
 
