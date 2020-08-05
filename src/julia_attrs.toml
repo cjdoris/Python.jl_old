@@ -8,7 +8,7 @@ unwrap = false
 catch = false
 
 [Any.__repr__]
-smeth = """o -> unsafe_pystr("$(repr(o)) (Julia)")"""
+smeth = """o -> unsafe_pystr("<julia $(repr(o))>")"""
 
 [Any.__str__]
 smeth = """o -> unsafe_pystr(string(o))"""
@@ -85,6 +85,15 @@ end"""
 flags = ["noargs"]
 unwrap = false
 
+[Any.__contains__]
+smeth = """function(o, vo)
+    v = @safe unsafe_pyconvertvalue(o, vo)
+    return (v in o) ? 1 : 0
+    @label error
+    return -1
+end"""
+if = "hasmethod(in, Tuple{Union{}, T})"
+
 [Iterator.__next__]
 smeth = """function (o)
     source = o.source
@@ -129,10 +138,46 @@ meth = "o -> (reverse!(o); unsafe_pynone())"
 if = "hasmethod(reverse!, Tuple{T})"
 flags = ["noargs"]
 
+[AbstractVector.__reversed__]
+meth = "o -> unsafe_pyjulia(reverse(o))"
+if = "hasmethod(reverse, Tuple{T})"
+flags = ["noargs"]
+
 [AbstractVector.sort]
 meth = "o -> (sort!(o); unsafe_pynone())"
 if = "hasmethod(sort!, Tuple{T})"
 flags = ["noargs"]
+
+[AbstractDict.keys]
+meth = "o -> unsafe_pyjulia(keys(o))"
+flags = ["noargs"]
+
+[AbstractDict.values]
+meth = "o -> unsafe_pyjulia(values(o))"
+flags = ["noargs"]
+
+[AbstractDict.items]
+meth = "o -> unsafe_pyjulia(pairs(o))"
+flags = ["noargs"]
+
+[AbstractDict.get]
+meth = """function (o, _a)
+    ko, d = @safe @unsafe_pyargparse _a (key::PyObject, default::PyObject=(@safe unsafe_pynone()))
+    k = @safe unsafe_pyconvertkey(o, ko)
+    v = get(o, k, d)
+    return unsafe_pyobj(v)
+    @label error
+    return PYNULL
+end"""
+flags = ["varargs"]
+
+[AbstractDict.__contains__]
+smeth = """function (o, ko)
+    k = @safe unsafe_pyconvertkey(o, ko)
+    return unsafe_pybool(haskey(o, k)) ? 1 : 0
+    @label error
+    return -1
+end"""
 
 [Number.__bool__]
 smeth = "o -> !iszero(o)"
@@ -191,23 +236,18 @@ if = "hasmethod(ceil, Tuple{Type{Integer}, T})"
 flags = ["noargs"]
 
 [Real.__round__]
-meth = """o -> error("not implemented")"""
+meth = """function (o, _a)
+    d, = @safe @unsafe_pyargparse _a (digits::Union{Int,Nothing}=nothing,)
+    if d === nothing
+        return unsafe_pyint(round(Integer, o))
+    else
+        return unsafe_pyjulia(oftype(o, round(o, digits=d)))
+    end
+    @label error
+    return PYNULL
+end"""
 if = "hasmethod(round, Tuple{Type{Integer}, T}) && hasmethod(round, Tuple{T})"
-flags = ["noargs"]
-# TODO:
-# pyjulia_attrinfo(::Val{:__round__}, ::Type{T}) where {T<:Real} =
-#     if hasmethod(round, Tuple{Type{Integer}, T}) && hasmethod(round, Tuple{T})
-#         :method, :varargs, :unwrap,
-#         function (o, _args)
-#             args = @PyArg_Parse _args (digits::Union{Int,Nothing}=nothing,)
-#             args === Py_ERRFLAG && return PyNULL
-#             if args.digits === nothing
-#                 return PyLong_From(round(Integer, o))
-#             else
-#                 return unsafe_pyjulia(oftype(o, round(o, digits=args.digits)))
-#             end
-#         end
-#     end
+flags = ["varargs"]
 
 [AnyRational.numerator]
 get = "o -> unsafe_pyjulia(numerator(o))"
@@ -284,20 +324,20 @@ catch = false
 
 [[IO.seek]]
 meth = """function (o, _a)
-    a = @safe @unsafe_pyargparse _a (offset::Int, whence::Int=0)
-    if a.whence == 0
+    n, wh = @safe @unsafe_pyargparse _a (offset::Int, whence::Int=0)
+    if wh == 0
         seekstart(o)
-        seek(o, position(o) + a.offset)
-    elseif args.whence == 1
-        seek(o, a.offset)
-    elseif args.whence == 2
+        seek(o, position(o) + n)
+    elseif wh == 1
+        seek(o, n)
+    elseif wh == 2
         seekend(o)
-        seek(o, position(o) + a.offset)
+        seek(o, position(o) + n)
     else
-        pyerror_set_IOUnsupportedOperation("seek with whence = $(a.whence)")
+        pyerror_set_IOUnsupportedOperation("seek with whence = $wh")
         @goto error
     end
-    return unsafe_pynone()
+    return unsafe_pyint(position(o))
     @label error
     return PYNULL
 end"""
@@ -332,7 +372,14 @@ unwrap = false
 catch = false
 
 [[IO.truncate]]
-meth = """(o, a) -> error("not implemented")"""
+meth = """function (o, _a)
+    n, = @safe @unsafe_pyargparse _a (size::Union{Int,Nothing}=nothing,)
+    n = n===nothing ? position(o) : n
+    truncate(o, n)
+    return unsafe_pynone()
+    @label error
+    return PYNULL
+end"""
 flags = ["varargs"]
 if = "hasmethod(truncate, Tuple{T,Int})"
 [[IO.truncate]]
@@ -340,20 +387,6 @@ meth = """(o, a) -> (pyerr_set_UnsupportedOperation("truncate"); PYNULL)"""
 flags = ["varargs"]
 unwrap = false
 catch = false
-# TODO:
-# pyjulia_attrinfo(::Val{:truncate}, ::Type{T}) where {T<:IO} =
-#     :method, :varargs, :unwrap,
-#     if hasmethod(truncate, Tuple{T,Int})
-#         function (o, _args)
-#             args = @PyArg_Parse _args (size::Union{Int,Nothing}=nothing,)
-#             args === Py_ERRFLAG && return PyNULL
-#             size == args.size === nothing ? position(o) : args.size
-#             truncate(o, size)
-#             return Py_IncRef(Py_None())
-#         end
-#     else
-#         o -> (PyErr_SetNone(PyExc_UnsupportedOperation()); PyNULL)
-#     end
 
 [[IO.writable]]
 meth = """o -> unsafe_pybool(iswritable(o))"""
@@ -365,20 +398,47 @@ flags = ["noargs"]
 unwrap = false
 catch = false
 
+# TODO: only make one system call
 [AsPyRawIO.read]
-meth = """(o,a) -> (pyerror_set_IOUnsupportedOperation("read"); PYNULL)"""
+meth = """function(o, _a)
+    n, = @safe @unsafe_pyargparse _a (size::Union{Int,Nothing}=nothing,)
+    if n===nothing || n<0
+        x = read(o)
+    else
+        x = read(o, n)
+    end
+    return unsafe_pybytes(x)
+    @label error
+    return PYNULL
+end"""
 flags = ["varargs"]
 
 [AsPyRawIO.readall]
-meth = """o -> (pyerror_set_IOUnsupportedOperation("readall"); PYNULL)"""
+meth = """o -> unsafe_pybytes(read(o))"""
 flags = ["noargs"]
 
+# TODO: only make one system call
 [AsPyRawIO.readinto]
-meth = """(o,b) -> (pyerror_set_IOUnsupportedOperation("readinto"); PYNULL)"""
+meth = """function (o, b)
+    buf = @safe unsafe_PyBuffer(b, CPyBUF_WRITABLE)
+    arr = unsafe_wrap(Array, Ptr{UInt8}(buf.buf), buf.len)
+    num = readbytes!(o, arr)
+    return unsafe_pyint(num)
+    @label error
+    return PYNULL
+end"""
 flags = ["onearg"]
 
+# TODO: only make one system call
 [AsPyRawIO.write]
-meth = """(o,b) -> (pyerror_set_IOUnsupportedOperation("write"); PYNULL)"""
+meth = """function(o, b)
+    buf = @safe unsafe_PyBuffer(b, CPyBUF_SIMPLE)
+    arr = unsafe_wrap(Array, Ptr{UInt8}(buf.buf), buf.len)
+    num = write(o, arr)
+    return unsafe_pyint(num)
+    @label error
+    return PYNULL
+end"""
 flags = ["onearg"]
 
 [AsPyBufferedIO.detach]
@@ -387,11 +447,11 @@ flags = ["noargs"]
 
 [AsPyBufferedIO.read]
 meth = """function (o, _a)
-    a = @safe @unsafe_pyargparse _a (n::Union{Int,Nothing}=nothing,)
-    if a.n===nothing || a.n < 0
+    n, = @safe @unsafe_pyargparse _a (n::Union{Int,Nothing}=nothing,)
+    if n===nothing || n < 0
         x = read(o)
     else
-        x = read(o, a.n)
+        x = read(o, n)
     end
     return unsafe_pybytes(x)
     @label error
@@ -399,7 +459,7 @@ meth = """function (o, _a)
 end"""
 flags = ["varargs"]
 
-# TODO: this is the same as read, so can do multiple reads
+# TODO: only make one system call
 [AsPyBufferedIO.read1]
 meth = """function (o, _a)
     a = @safe @unsafe_pyargparse _a (n::Union{Int,Nothing}=nothing,)
@@ -425,7 +485,7 @@ meth = """function(o, b)
 end"""
 flags = ["onearg"]
 
-# TODO: this is identical to readinto, so can do multiple reads
+# TODO: only make one system call
 [AsPyBufferedIO.readinto1]
 meth = """function(o, b)
     buf = @safe unsafe_PyBuffer(b, CPyBUF_WRITABLE)

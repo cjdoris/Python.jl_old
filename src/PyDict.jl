@@ -1,37 +1,35 @@
 """
-    PyDict([o], [K, [V]])
-    PyDict{[K, [V]]}([o])
+    PyDict{K,V}(o=pydict()) :: AbstractDict{K,V}
 
 A Julia dictionary wrapping the Python dictionary `o` (or anything satisfying the mapping interface).
-
-`K` and `V` can be types or `AbstractPyConverter`s, and specify the key and value types and conversion policy.
 """
-struct PyDict{K, V, KC<:AbstractPyConverter{K}, VC<:AbstractPyConverter{V}} <: AbstractDict{K, V}
+struct PyDict{K,V} <: AbstractDict{K,V}
     parent :: PyObject
-    keyconverter :: KC
-    valconverter :: VC
 end
-PyDict(o=pydict(), K::PyConverterLike=PyObject, V::PyConverterLike=PyObject) =
-    PyDict(PyObject(o), AbstractPyConverter(K), AbstractPyConverter(V))
-PyDict(K::PyConverterLike, V::PyConverterLike=PyObject) =
-    PyDict(pydict(), K, V)
-PyDict{K}(o=pydict()) where {K} = PyDict(o, K)
-PyDict{K,V}(o=pydict()) where {K,V} = PyDict(o, K, V)
+PyDict{K,V}() where {K,V} = PyDict{K,V}(pydict())
+PyDict{K}(o=pydict()) where {K} = PyDict{K,PyObject}(o)
+PyDict(o=pydict()) = PyDict{PyObject,PyObject}(o)
 export PyDict
 
 unsafe_pyobj(d::PyDict) = d.parent
 
+Base.convert(::Type{PyDict}, d::PyDict) = d
+Base.convert(::Type{PyDict{K}}, d::PyDict) where {K} = PyDict{K,valtype(d)}(d)
+Base.convert(::Type{PyDict{K,V}}, d::PyDict) where {K,V} = PyDict{K,V}(d)
+
+### DICT INTERFACE
+
 Base.length(d::PyDict) = Base.length(d.parent)
 
-function Base.iterate(d::PyDict, it=nothing)
+function Base.iterate(d::PyDict{K,V}, it=nothing) where {K,V}
     if it===nothing
         it = pyiter(d.parent.items())
     end
     o = unsafe_pyiter_next(it)
     if !isnull(o)
         ko, vo = o
-        k = pyconvert(d.keyconverter, ko)
-        v = pyconvert(d.valconverter, vo)
+        k = pyconvert(K, ko)
+        v = pyconvert(V, vo)
         return (k => v), it
     elseif pyerror_occurred()
         pythrow()
@@ -40,11 +38,11 @@ function Base.iterate(d::PyDict, it=nothing)
     end
 end
 
-function Base.get(d::PyDict, k, dflt)
-    ko = PyObject(d.keyconverter, k)
+function Base.get(d::PyDict{K,V}, k, dflt) where {K,V}
+    ko = PyObject(convert(K, k))
     vo = unsafe_pygetitem(d.parent, ko)
     if !isnull(vo)
-        return pyconvert(d.valconverter, vo)
+        return pyconvert(V, vo)
     elseif pyerror_occurred_KeyError()
         pyerror_clear()
         return dflt
@@ -53,9 +51,20 @@ function Base.get(d::PyDict, k, dflt)
     end
 end
 
-function Base.setindex!(d::PyDict, v, k)
-    ko = PyObject(d.keyconverter, k)
-    vo = PyObject(d.valconverter, v)
-    pysetitem(d, ko, vo)
+function Base.setindex!(d::PyDict{K,V}, v, k) where {K,V}
+    ko = PyObject(convert(K, k))
+    vo = PyObject(convert(V, v))
+    pysetitem(d.parent, ko, vo)
     d
 end
+
+### CONVERSIONS
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{Symbol("collections.abc.Mapping")}, o) where {T<:PyDict} =
+    VNE{T}(T(o))
+unsafe_pyconvert_rule(::Type{T}, ::Val{Symbol("collections.abc.Mapping")}, o) where {T>:PyDict} =
+    unsafe_pyconvert_rule(PyDict, Val(Symbol("collections.abc.Mapping")), o)
+unsafe_pyconvert_rule(::Type{T}, ::Val{Symbol("collections.abc.Mapping")}, o) where {K, T>:PyDict{K}} =
+    unsafe_pyconvert_rule(PyDict{K}, Val(Symbol("collections.abc.Mapping")), o)
+unsafe_pyconvert_rule(::Type{T}, ::Val{Symbol("collections.abc.Mapping")}, o) where {K, V, T>:PyDict{K,V}} =
+    unsafe_pyconvert_rule(PyDict{K,V}, Val(Symbol("collections.abc.Mapping")), o)

@@ -47,9 +47,9 @@ include("arg.jl")
 include("newtype.jl")
 include("julia.jl")
 # wrapper types providing Julia semantics around Python objects
-include("converters.jl")
 include("PyDict.jl")
 include("PyList.jl")
+include("PySet.jl")
 include("PyArray.jl")
 # extras
 include("pymacro.jl")

@@ -13,6 +13,8 @@ struct ValueOrError{T}
     ValueOrError{T}(value) where {T} = new{T}(false, convert(T, value))
 end
 
+const VE = ValueOrError
+
 iserr(o::ValueOrError) = o.iserr
 value(o::ValueOrError) = o.value
 
@@ -32,6 +34,15 @@ end
 safe(o) = @safeor o pythrow()
 
 
+struct ValueOrNothing{T}
+    isnothing :: Bool
+    value :: T
+    ValueOrNothing{T}() where {T} = new{T}(true)
+    ValueOrNothing{T}(value) where {T} = new{T}(false, convert(T, value))
+end
+
+const VN = ValueOrNothing
+
 struct ValueOrNothingOrError{T}
     iserr :: Bool
     isnothing :: Bool
@@ -41,17 +52,40 @@ struct ValueOrNothingOrError{T}
     ValueOrNothingOrError{T}(value) where {T} = new{T}(false, false, convert(T, something(value)))
 end
 
+const VNE = ValueOrNothingOrError
+
 Base.convert(::Type{ValueOrNothingOrError}, x::ValueOrError{T}) where {T} =
     Base.convert(ValueOrNothingOrError{T}, x)
 Base.convert(::Type{ValueOrNothingOrError{T}}, x::ValueOrError) where {T} =
     iserr(x) ? ValueOrNothingOrError{T}() : ValueOrNothingOrError{T}(Some(x.value))
+
 Base.convert(::Type{ValueOrNothingOrError{T}}, x::ValueOrNothingOrError{T}) where {T} =
     x
 Base.convert(::Type{ValueOrNothingOrError{T}}, x::ValueOrNothingOrError) where {T} =
     x.iserr ? ValueOrNothingOrError{T}() : x.isnothing ? ValueOrNothingOrError{T}(nothing) : ValueOrNothingOrError{T}(Some(x.value))
 
+Base.convert(::Type{ValueOrNothingOrError}, x::ValueOrNothing{T}) where {T} =
+    convert(ValueOrNothingOrError{T}, x)
+Base.convert(::Type{ValueOrNothingOrError{T}}, x::ValueOrNothing) where {T} =
+    x.isnothing ? ValueOrNothingOrError{T}(nothing) : ValueOrNothingOrError{T}(Some(x.value))
+
 iserr(o::ValueOrNothingOrError) = o.iserr
-value(o::ValueOrNothingOrError) = o.isnothing ? nothing : Some(o.value)
+value(o::ValueOrNothingOrError{T}) where {T} = o.isnothing ? nothing : Some{T}(o.value)
+
+function nothingtoerror(f, r::ValueOrNothingOrError{T}) where {T}
+    R = ValueOrError{T}
+    if r.iserr
+        return R()
+    elseif r.isnothing
+        f()
+        return R()
+    else
+        return R(r.value)
+    end
+end
+
+nothingtoerror(r::ValueOrNothingOrError) = nothingtoerror(()->nothing, r)
+
 
 """
     pointer_from_obj(o)
@@ -69,65 +103,54 @@ function pointer_from_obj(o)
     p, c
 end
 
-@generated function cfunction(func, ::Type{R}, ::Type{T}) where {R,T}
-    :(@cfunction($(Expr(:$, :func)), $R, ($(T.parameters...),)))
+# @generated function cfunction(func, ::Type{R}, ::Type{T}) where {R,T}
+#     :(@cfunction($(Expr(:$, :func)), $R, ($(T.parameters...),)))
+# end
+
+"""
+    tryconvert(T, x)
+
+A `ValueOrNothing{T}` containing the value `x` converted to a `T` if possible, otherwise containing `nothing`.
+
+If `x` is a `ValueOrNothing`, `ValueOrError` or `ValueOrNothingOrError`, then nothings and errors are passed through and `tryconvert` is called on any value.
+
+The default implementation calls `convert(T, x)`, interprets any exceptions `e` such that `isfailedconversion(e, T, x)` as a failed conversion, and rethrows any other exceptions.
+"""
+tryconvert(::Type{T}, x) where {T} =
+    try
+        VN{T}(convert(T, x))
+    catch err
+        if isfailedconversion(err, T, x)
+            return VN{T}()
+        else
+            rethrow()
+        end
+    end
+
+tryconvert(::Type{T}, x::ValueOrNothingOrError) where {T} =
+    x.iserr ? VNE{T}() : x.isnothing ? VNE{T}(nothing) : convert(VNE{T}, tryconvert(T, x.value))
+tryconvert(::Type{T}, x::ValueOrError) where {T} =
+    x.iserr ? VNE{T}() : convert(VNE{T}, tryconvert(T, x.value))
+tryconvert(::Type{T}, x::ValueOrNothing) where {T} =
+    x.isnothing ? VN{T}() : tryconvert(T, x.value)
+
+tryconvert(::Type{T}, x::S) where {T, S<:T} = VN{T}(x)
+
+for T in (Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128)
+    @eval tryconvert(::Type{$T}, x::Integer) =
+        $(typemin(T)) ≤ x ≤ $(typemax(T)) ? VN{$T}(x) : VN{$T}()
+    @eval tryconvert(::Type{$T}, x::$T) = VN{$T}(x)
 end
 
+tryconvert(::Type{BigInt}, x::Integer) = VN{BigInt}(x)
 
-# macro cpycall(ex)
-#     ex isa Expr && ex.head == :(::) && length(ex.args) == 2 || @goto err
-#     ex, rettype = ex.args
-#     rettype = @eval($rettype)
-#     ex isa Expr && ex.head == :call || @goto err
-#     fname = esc(ex.args[1])
-#     args = []
-#     for ex in ex.args[2:end]
-#         ex isa Expr && ex.head == :(::) && length(ex.args) == 2 || @goto err
-#         x, t = ex.args
-#         push!(args, (gensym(), gensym(), esc(x), @eval($t)))
-#     end
-#     return quote
-#         let $([:($n = Base.cconvert($t, $x)) for (n,u,x,t) in args]...)
-#             Base.GC.@preserve $([n for (n,u,x,t) in args]...) begin
-#                 let $([:($u = Base.unsafe_convert($t, $n)) for (n,u,x,t) in args]...)
-#                     a = ccall(($fname, PYLIB), $(cpycall_ctype(rettype)), ($([cpycall_ctype(t) for (n,u,x,t) in args]...),), $([:(cpycall_toc($u)) for (n,u,x,t) in args]...))
-#                     a = cpycall_fromc($rettype, a)
-#                     if iserr(a)
-#                         $([:(cpycall_errhook($u)) for (n,u,x,t) in args]...)
-#                     end
-#                     cpycall_returnhook(a)
-#                 end
-#             end
-#         end
-#     end
-#     @label err
-#     error("expecting `@cpycall PyFunction(x::T, ...)::R`")
-# end
+isfailedconversion(err, ::Type{T}, x) where {T} =
+    isfailedconversion(err, T, T, x)
 
-# macro cpyobject(name)
-#     quote
-#         CPyBorrowedPtr(cglobal(($(esc(name)), PYLIB), CPyObject))
-#     end
-# end
+isfailedconversion(err, ::Type{T}, ::Type{Any}, x) where {T} =
+    err isa MethodError && err.f === convert && err.args === (T, x)
+isfailedconversion(err, ::Type{T}, ::Type{S}, x) where {T,S} =
+    isfailedconversion(err, T, supertype(S), x)
 
-# macro unsafe_cacheget_object(cache, name)
-#     quote
-#         unsafe_cacheget!($(esc(cache))) do
-#             @cpyobject $(esc(name))
-#         end
-#     end
-# end
-
-# macro cpyobjectptr(name)
-#     quote
-#         CPyBorrowedPtr(unsafe_load(cglobal(($(esc(name)), PYLIB), PyPtr)))
-#     end
-# end
-
-# macro unsafe_cacheget_objectptr(cache, name)
-#     quote
-#         unsafe_cacheget!($(esc(cache))) do
-#             @cpyobjectptr $(esc(name))
-#         end
-#     end
-# end
+isfailedconversion(err, ::Type{T}, ::Type{Number}, x::Number) where {T} =
+    err isa InexactError || isfailedconversion(err, T, supertype(Number), x)

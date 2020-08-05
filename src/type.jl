@@ -14,6 +14,7 @@ _unsafe_pytype_hasfeature(t, f) = !iszero(_unsafe_pytype_getflags(t) & f)
 
 _unsafe_pytype_getflags(t) = uptr(CPyTypeObject, t).flags[]
 _unsafe_pytype_getname(t) = unsafe_string(uptr(CPyTypeObject, t).name[])
+_unsafe_pytype_getmro(t) = PyBorrowedRef(uptr(CPyTypeObject, t).mro[])
 
 function unsafe_pytype(o)
     if !(o isa AbstractPyRef)

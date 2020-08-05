@@ -249,6 +249,12 @@ pyerror_set_NameError(args...; kwargs...) = safe(unsafe_pyerror_set_NameError(ar
 export pyerror_set_NameError
 
 
+const _pycontainerabc = pynull()
+unsafe_pycontainerabc() = unsafe_cacheget!(_pycontainerabc) do; unsafe_pyimportattr("collections.abc", "Container"); end
+pycontainerabc(args...; kwargs...) = safe(unsafe_pycontainerabc(args...; kwargs...))
+export pycontainerabc
+
+
 function unsafe_pydelattr(x1::Any, x2::Any)
     if !isa(x1, AbstractPyRef)
         x1 = unsafe_pyobj(x1)
@@ -535,6 +541,12 @@ function unsafe_pyneg(x1::Any)
 end
 pyneg(args...; kwargs...) = safe(unsafe_pyneg(args...; kwargs...))
 export pyneg
+
+
+const _pycomplexabc = pynull()
+unsafe_pycomplexabc() = unsafe_cacheget!(_pycomplexabc) do; unsafe_pyimportattr("numbers", "Complex"); end
+pycomplexabc(args...; kwargs...) = safe(unsafe_pycomplexabc(args...; kwargs...))
+export pycomplexabc
 
 
 function unsafe_pycomplex_realasdouble(x1::Any)
@@ -838,6 +850,12 @@ const _pybufferedrwiotype = pynull()
 unsafe_pybufferedrwiotype() = unsafe_cacheget!(_pybufferedrwiotype) do; unsafe_pyimportattr("io", "BufferedRW"); end
 pybufferedrwiotype(args...; kwargs...) = safe(unsafe_pybufferedrwiotype(args...; kwargs...))
 export pybufferedrwiotype
+
+
+const _pysetabc = pynull()
+unsafe_pysetabc() = unsafe_cacheget!(_pysetabc) do; unsafe_pyimportattr("collections.abc", "Set"); end
+pysetabc(args...; kwargs...) = safe(unsafe_pysetabc(args...; kwargs...))
+export pysetabc
 
 
 const _pyexc_AttributeError_type = pynull()
@@ -1197,6 +1215,12 @@ const _pyiobasetype = pynull()
 unsafe_pyiobasetype() = unsafe_cacheget!(_pyiobasetype) do; unsafe_pyimportattr("io", "IOBase"); end
 pyiobasetype(args...; kwargs...) = safe(unsafe_pyiobasetype(args...; kwargs...))
 export pyiobasetype
+
+
+const _pyintegralabc = pynull()
+unsafe_pyintegralabc() = unsafe_cacheget!(_pyintegralabc) do; unsafe_pyimportattr("numbers", "Integral"); end
+pyintegralabc(args...; kwargs...) = safe(unsafe_pyintegralabc(args...; kwargs...))
+export pyintegralabc
 
 
 function unsafe_pypos(x1::Any)
@@ -1643,6 +1667,12 @@ pyerror_occurred_MemoryError(args...; kwargs...) = safe(unsafe_pyerror_occurred_
 export pyerror_occurred_MemoryError
 
 
+const _pynumberabc = pynull()
+unsafe_pynumberabc() = unsafe_cacheget!(_pynumberabc) do; unsafe_pyimportattr("numbers", "Number"); end
+pynumberabc(args...; kwargs...) = safe(unsafe_pynumberabc(args...; kwargs...))
+export pynumberabc
+
+
 const _pynone = pynull()
 unsafe_pynone() = unsafe_cacheget!(_pynone) do; cglobal((:_Py_NoneStruct, PYLIB), CPyObject); end
 pynone(args...; kwargs...) = safe(unsafe_pynone(args...; kwargs...))
@@ -1664,6 +1694,12 @@ export pyfileiotype
 unsafe_pybufferedrwio(args...; kwargs...) = unsafe_pycall_args(pybufferedrwiotype(), args, kwargs)
 pybufferedrwio(args...; kwargs...) = safe(unsafe_pybufferedrwio(args...; kwargs...))
 export pybufferedrwio
+
+
+const _pysequenceabc = pynull()
+unsafe_pysequenceabc() = unsafe_cacheget!(_pysequenceabc) do; unsafe_pyimportattr("collections.abc", "Sequence"); end
+pysequenceabc(args...; kwargs...) = safe(unsafe_pysequenceabc(args...; kwargs...))
+export pysequenceabc
 
 
 const _pyobjecttype = pynull()
@@ -2304,6 +2340,12 @@ pyexc_IndentationError_type(args...; kwargs...) = safe(unsafe_pyexc_IndentationE
 export pyexc_IndentationError_type
 
 
+const _pymappingabc = pynull()
+unsafe_pymappingabc() = unsafe_cacheget!(_pymappingabc) do; unsafe_pyimportattr("collections.abc", "Mapping"); end
+pymappingabc(args...; kwargs...) = safe(unsafe_pymappingabc(args...; kwargs...))
+export pymappingabc
+
+
 pyerror_occurred_OverflowError() = pyerror_occurred(pyexc_OverflowError_type())
 pyerror_occurred_OverflowError(args...; kwargs...) = safe(unsafe_pyerror_occurred_OverflowError(args...; kwargs...))
 export pyerror_occurred_OverflowError
@@ -2717,6 +2759,12 @@ pytype(args...; kwargs...) = safe(unsafe_pytype(args...; kwargs...))
 export pytype
 
 
+const _pyrationalabc = pynull()
+unsafe_pyrationalabc() = unsafe_cacheget!(_pyrationalabc) do; unsafe_pyimportattr("numbers", "Rational"); end
+pyrationalabc(args...; kwargs...) = safe(unsafe_pyrationalabc(args...; kwargs...))
+export pyrationalabc
+
+
 function unsafe_pycomplex(x1::Real, x2::Real)
     r = ccall((:PyComplex_FromDoubles, PYLIB), Ptr{Cvoid}, (Cdouble, Cdouble), x1, x2)
     if r == C_NULL
@@ -2779,19 +2827,25 @@ pytextiowrapper(args...; kwargs...) = safe(unsafe_pytextiowrapper(args...; kwarg
 export pytextiowrapper
 
 
+const _pyrealabc = pynull()
+unsafe_pyrealabc() = unsafe_cacheget!(_pyrealabc) do; unsafe_pyimportattr("numbers", "Real"); end
+pyrealabc(args...; kwargs...) = safe(unsafe_pyrealabc(args...; kwargs...))
+export pyrealabc
+
+
 pyerror_occurred_NotImplementedError() = pyerror_occurred(pyexc_NotImplementedError_type())
 pyerror_occurred_NotImplementedError(args...; kwargs...) = safe(unsafe_pyerror_occurred_NotImplementedError(args...; kwargs...))
 export pyerror_occurred_NotImplementedError
 
 
-unsafe_pylist(args...; kwargs...) = unsafe_pycall_args(pylisttype(), args, kwargs)
-pylist(args...; kwargs...) = safe(unsafe_pylist(args...; kwargs...))
-export pylist
-
-
 unsafe_pytime(args...; kwargs...) = unsafe_pycall_args(pytimetype(), args, kwargs)
 pytime(args...; kwargs...) = safe(unsafe_pytime(args...; kwargs...))
 export pytime
+
+
+unsafe_pylist(args...; kwargs...) = unsafe_pycall_args(pylisttype(), args, kwargs)
+pylist(args...; kwargs...) = safe(unsafe_pylist(args...; kwargs...))
+export pylist
 
 
 pyerror_set_UnicodeError() = pyerror_set(pyexc_UnicodeError_type())

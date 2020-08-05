@@ -5,12 +5,21 @@ Base.@kwdef struct CPyFloatObject <: AbstractCPyFloatObject
     value :: Cdouble
 end
 
-unsafe_pyfloat_convert(::Type{Cdouble}, o::AbstractPyRef) =
-    unsafe_pyfloat_asdouble(o)
-function unsafe_pyfloat_convert(::Type{T}, o::AbstractPyRef) where {T<:Number}
-    x = unsafe_pyfloat_convert(Cdouble, o)
-    R = ValueOrError{T}
-    return iserr(x) ? R() : R(convert(T, value(x)))
+function unsafe_pyfloat_tryconvert(::Type{T}, o::AbstractPyRef) where {T}
+    r = unsafe_pyfloat_asdouble(o)::VE{Cdouble}
+    if T >: Cdouble
+        return convert(VNE, r)
+    elseif T <: PyFloatLike
+        return convert(VNE{T}, r)
+    else
+        return tryconvert(T, r)
+    end
 end
-pyfloat_convert(T::Type, o::AbstractPyRef) = safe(unsafe_pyfloat_convert(T, o))
-export pyfloat_convert
+
+unsafe_pyfloat_convert(::Type{T}, o::AbstractPyRef) where {T<:Real} =
+    tryconvtoconv(o, unsafe_pyfloat_tryconvert(T, o))
+pyfloat_tryconvert(::Type{T}, o::AbstractPyRef) where {T} =
+    safe(unsafe_pyfloat_tryconvert(T, o))
+pyfloat_convert(::Type{T}, o::AbstractPyRef) where {T} =
+    safe(unsafe_pyfloat_convert(T, o))
+export pyfloat_tryconvert, pyfloat_convert

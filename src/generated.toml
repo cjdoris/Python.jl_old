@@ -679,6 +679,37 @@ cfunc = "PyNumber_InplaceOr O O O"
 [pyindex]
 cfunc = "PyNumber_Index O O"
 
+### NUMERIC ABC
+
+[pynumberabc]
+cachedobj = {expr="""unsafe_pyimportattr("numbers", "Number")"""}
+
+[pycomplexabc]
+cachedobj = {expr="""unsafe_pyimportattr("numbers", "Complex")"""}
+
+[pyrealabc]
+cachedobj = {expr="""unsafe_pyimportattr("numbers", "Real")"""}
+
+[pyrationalabc]
+cachedobj = {expr="""unsafe_pyimportattr("numbers", "Rational")"""}
+
+[pyintegralabc]
+cachedobj = {expr="""unsafe_pyimportattr("numbers", "Integral")"""}
+
+### COLLECTIONS ABC
+
+[pycontainerabc]
+cachedobj = {expr="""unsafe_pyimportattr("collections.abc", "Container")"""}
+
+[pysequenceabc]
+cachedobj = {expr="""unsafe_pyimportattr("collections.abc", "Sequence")"""}
+
+[pymappingabc]
+cachedobj = {expr="""unsafe_pyimportattr("collections.abc", "Mapping")"""}
+
+[pysetabc]
+cachedobj = {expr="""unsafe_pyimportattr("collections.abc", "Set")"""}
+
 ### IO
 
 [pyiobasetype]

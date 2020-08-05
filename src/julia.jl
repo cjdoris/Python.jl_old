@@ -389,7 +389,7 @@ open(JL_ATTR_JL, "w") do io
                         elseif name in ("__repr__", "__str__", "__iter__", "__next__", "__int__", "__float__", "__index__", "__neg__", "__pos__", "__abs__", "__invert__")
                             "PyPtr", ("Ptr{CPyJuliaObject{T}}",)
                         # binaryfunc, getattrofunc
-                        elseif name in ("__getitem__", "__contains__", "__concat__", "__iconcat__", "__getattr__")
+                        elseif name in ("__getitem__", "__concat__", "__iconcat__", "__getattr__")
                             "PyPtr", ("Ptr{CPyJuliaObject{T}}", "PyPtr",)
                         # binaryfunc (self can be anywhere)
                         elseif name in ("__add__",)
@@ -406,6 +406,8 @@ open(JL_ATTR_JL, "w") do io
                         # inquiry
                         elseif name in ("__bool__",)
                             "Cint", ("Ptr{CPyJuliaObject{T}}",)
+                        elseif name in ("__contains__",)
+                            "Cint", ("Ptr{CPyJuliaObject{T}}", "PyPtr")
                         # objobjargproc, setattrofunc
                         elseif name in ("__setitem__", "__setattr__")
                             "Cint", ("Ptr{CPyJuliaObject{T}}", "PyPtr", "PyPtr")
@@ -576,3 +578,9 @@ pyjulia_abc(::Type{IO}) = "io.IOBase"
 pyjulia_abc(::Type{AsPyRawIO{T}}) where {T} = "io.RawIOBase"
 pyjulia_abc(::Type{AsPyBufferedIO{T}}) where {T} = "io.BufferedIOBase"
 pyjulia_abc(::Type{AsPyTextIO{T}}) where {T} = "io.TextIOBase"
+
+### Container ABCs
+pyjulia_abc(::Type{AbstractVector{T}}) where {T} = "collections.abc.Sequence"
+pyjulia_abc(::Type{AbstractArray{T,N}}) where {T,N} = "collections.abc.Collection"
+pyjulia_abc(::Type{AbstractDict{K,V}}) where {K,V} = "collections.abc.Mapping"
+pyjulia_abc(::Type{AbstractSet{T}}) where {T} = "collections.abc.Set"
