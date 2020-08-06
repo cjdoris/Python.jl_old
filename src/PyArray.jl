@@ -1,10 +1,18 @@
 """
-    PyArray([o], [T], [Val(N)])
-    PyArray{[T, [N]]}([o])
+    PyArray{T,N,L}(o) :: AbstractArray{T,N}
 
-A Julia array wrapping the Python object `o` satisfying the `numpy` array interface.
+A Julia array wrapping the Python object `o` satisfying the buffer protocol or `numpy` array interface.
+
+Type parameters not specified or set to `missing` are inferred at run-time.
+
+The parameter `L` controls indexing:
+* If `L == false` then cartesian indexing is used
+* If `L == true` then linear indexing is used
+* If `L isa Int` then linear indexing is used with stride `L`
+
+Note that numpy arrays are commonly C-contigous, whereas Julia requires Fortran-contiguous arrays for linear indexing. You may with to transpose the array first.
 """
-struct PyArray{T,N} <: AbstractArray{T,N}
+struct PyArray{T,N,L} <: AbstractArray{T,N}
     parent :: PyObject # the object being wrapped
     handle :: Any      # an object required to keep the underlying memory valid
     ptr :: Ptr{T}      # pointer to the memory
@@ -15,60 +23,100 @@ struct PyArray{T,N} <: AbstractArray{T,N}
     el_strides :: NTuple{N, Int}
 end
 
+"""
+    PyVector{T}(undef, d)
+
+A `PyArray{T,1}` of length `d` backed by a Python `array.array`.
+"""
 const PyVector{T} = PyArray{T,1}
 const PyMatrix{T} = PyArray{T,2}
 
 export PyArray, PyVector, PyMatrix
 
+unsafe_pyobj(o::PyArray) = o.parent
+
 # CONSTRUCTORS
 
-function PyArray(o::PyObject, ::Type{T}, ::Val{N}, info::NamedTuple=pyarray_get_info(o)) where {T,N}
-    Base.allocatedinline(T) || error("T must be allocated inline")
+function PyArray{T,N,L}(o::PyObject, info::NamedTuple) where {T,N,L}
+    # element type
+    if T === missing
+        return PyArray{info.eltype, N, L}(o, info)
+    elseif !isa(T, Type)
+        error("T must be `missing` or a type (got $T)")
+    end
+    Base.allocatedinline(T) || error("T must be allocated inline (got $T)")
+    sizeof(T) == info.elsize || error("sizeof(T) is incorrect (expected $(info.elsize), got $(sizeof(T)))")
+    # pointer
     ptr = info.ptr
+    # mutability
     mutable = info.mutable
-    sizeof(T) == info.elsize || error("element size is incorrect (expected sizeof(T)=$(sizeof(T)), got $(info.elsize))")
-    length(info.size) == N || error("size is incorrect length (expected N=$N, got $(length(info.size)))")
+    # number of dimensions
+    if N===missing
+        return PyArray{T, length(info.size), L}(o, info)
+    elseif !isa(N, Int)
+        error("N must be `missing` or an Int (got $N)")
+    end
+    length(info.size) == N || error("N is incorrect (expected $(length(info.size)), got $N)")
+    # size, length
     _size = NTuple{N,Int}(info.size)
     _length = prod(_size)
     length(info.strides) == N || error("strides is incorrect length (expected N=$N, got $(length(info.strides)))")
     byte_strides = NTuple{N,Int}(info.strides)
     el_strides = map(byte_strides) do s
         q, r = fldmod(s, sizeof(T))
-        r == 0 || error("strides must be a multiple of the element size")
+        r == 0 || error("byte strides must be a multiple of the element size (got $(byte_strides))")
         q
     end
-    PyArray{T,N}(o, info.handle, ptr, mutable, _size, _length, byte_strides, el_strides)
+    # indexing
+    if L === missing || L === true || L isa Int
+        if N ≤ 1 || byte_strides == make_f_contig_strides(byte_strides[1], _size...)
+            if L === missing
+                return PyArray{T, N, N==0 ? 0 : byte_strides[1]}(o, info)
+            elseif L isa Int
+                N==0 || L==byte_strides[1] || error("L is incorrect (expected bool or $(byte_strides[1]), got $L)")
+            end
+        elseif L === missing
+            return PyArray{T, N, false}(o, info)
+        else
+            error("L is incorrect (expected false because array is not contiguous, got $L)")
+        end
+    elseif L !== false
+        error("L must be `missing`, boolean or an Int (got $L)")
+    end
+    # done
+    PyArray{T,N,L}(o, info.handle, ptr, mutable, _size, _length, byte_strides, el_strides)
 end
 
-PyArray(o::PyObject, ::Type{T}, info::NamedTuple=pyarray_get_info(o)) where {T} =
-    PyArray(o, T, Val(length(info.size)), info)
+PyArray{T,N,L}(o::PyObject; opts...) where {T,N,L} = PyArray{T,N,L}(o, pyarray_get_info(o; opts...))
+PyArray{T,N,L}(o; opts...) where {T,N,L} = PyArray{T,N,L}(PyObject(o); opts...)
+PyArray{T,N}(o; opts...) where {T,N} = PyArray{T,N,missing}(PyObject(o); opts...)
+PyArray{T}(o; opts...) where {T} = PyArray{T,missing,missing}(PyObject(o); opts...)
+PyArray(o; opts...) = PyArray{missing,missing,missing}(PyObject(o); opts...)
 
-PyArray(o::PyObject, ::Val{N}, info::NamedTuple=pyarray_get_info(o)) where {N} =
-    PyArray(o, info.eltype, Val(N), info)
+# CONSTRUCT FROM array.array
 
-PyArray(o::PyObject, info::NamedTuple=pyarray_get_info(o)) =
-    PyArray(o, info.eltype, Val(length(info.size)), info)
-
-PyArray{T}(o::PyObject) where {T} = PyArray(o, T)
-PyArray{T,N}(o::PyObject) where {T,N} = PyArray(o, T, Val(N))
-(::Type{PyArray{_T,N} where _T})(o::PyObject) where {N} = PyArray(o, Val(N))
-
-(::Type{A})(o, args...) where {A<:PyArray} = A(PyObject(o), args...)
-
-function pyarray_get_info(o::PyObject)
-    if pyhasattr(o, "__array_interface__")
-        return pyarray_get_info(Val(:array_interface), o)
-    elseif pyhasattr(o, "__array_struct__")
-        return pyarray_get_info(Val(:array_struct), o)
-    else
-        error("does not look like an array")
+for T in (Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float32, Float64)
+    for (T2,c) in ((Cchar, "b"), (Cuchar, "B"), (Cshort, "h"), (Cushort, "H"), (Cint, "i"), (Cuint, "I"), (Clong, "l"), (Culong, "L"), (Clonglong, "q"), (Culonglong, "Q"), (Cfloat, "f"), (Cdouble, "d"))
+        if T === T2
+            @eval PyVector{$T}(undef, d::Integer) = PyVector{$T,$(sizeof(T))}(pyimportattr("array","array")($c, pybytearray(d * $(sizeof(T)))))
+            break
+        end
     end
 end
 
-islittleendian() =
-    Base.ENDIAN_BOM == 0x04030201 ? true  :
-    Base.ENDIAN_BOM == 0x01020304 ? false :
-    error("cannot determine endianness")
+# PROTOCOL-SPECIFIC INFORMATION
+
+function pyarray_get_info(o::PyObject; kind::Symbol=:any)
+    if kind in (:any, :array, :array_interface) && pyhasattr(o, "__array_interface__")
+        return pyarray_get_info(Val(:array_interface), o)
+    elseif kind in (:any, :array, :array_struct) && pyhasattr(o, "__array_struct__")
+        return pyarray_get_info(Val(:array_struct), o)
+    elseif kind in (:any, :buffer) && _unsafe_pyisbuffer(o)
+        return pyarray_get_info(Val(:buffer), o)
+    else
+        error("Python `$(_unsafe_pytype_getname(_unsafe_pytype(o)))` does not support array interface$(kind==:any ? "" : " of kind `$(repr(kind))`")")
+    end
+end
 
 function pyarray_get_info(::Val{:array_interface}, o::PyObject)
     a = o.__array_interface__
@@ -172,22 +220,70 @@ function pyarray_get_info(::Val{:array_interface}, o::PyObject)
     (handle=a, ptr=ptr, mutable=mutable, elsize=elsize, eltype=eltype, size=size, strides=strides)
 end
 
+function pyarray_get_info(::Val{:array_struct}, o::PyObject)
+    error("not implemented")
+end
+
+function pyarray_get_info(::Val{:buffer}, o::PyObject; flags::Integer=CPyBUF_RECORDS_RO)
+    buf = PyBuffer(o, flags)
+
+    # suboffsets
+    isnull(buf.view[].suboffsets) || error("buffers with suboffsets not supported")
+
+    (handle=buf, ptr=buf.buf, mutable=!buf.readonly, elsize=buf.itemsize, eltype=buf.itemtype, size=buf.shape, strides=buf.strides)
+end
+
 # ARRAY INTERFACE
 
 Base.isimmutable(o::PyArray) = !o.mutable
+
 Base.size(o::PyArray) = o.size
+
 Base.length(o::PyArray) = o.length
+
 Base.strides(o::PyArray) = o.el_strides
+
 Base.unsafe_convert(::Type{Ptr{T}}, o::PyArray{T}) where {T} = o.ptr
+
+Base.IndexStyle(::Type{PyArray{T,N,L}}) where {T,N,L} = L===false ? IndexCartesian() : IndexLinear()
+
+_idx_to_offset(o::PyArray{T,0}        ) where {T} = 0
+_idx_to_offset(o::PyArray{T,0}, i::Int) where {T} = 0
+
+_idx_to_offset(o::PyArray{T,1,false}, i::Int) where {T}   = (i-1) * o.byte_strides[1]
+_idx_to_offset(o::PyArray{T,1,true},  i::Int) where {T}   = (i-1) * o.byte_strides[1]
+_idx_to_offset(o::PyArray{T,1,L},     i::Int) where {T,L} = (i-1) * L
+
+_idx_to_offset(o::PyArray{T,N,L}, idx::Vararg{Int,N}) where {T,N,L} = sum((idx .- 1) .* o.byte_strides)
+
+_idx_to_offset(o::PyArray{T,N,false}, i::Int) where {T,N}   = _idx_to_offset(o, Base._unsafe_ind2sub(o.size, i)...)
+_idx_to_offset(o::PyArray{T,N,true},  i::Int) where {T,N}   = (i-1) * o.byte_strides[1]
+_idx_to_offset(o::PyArray{T,N,L},     i::Int) where {T,N,L} = (i-1) * L
+
 Base.@propagate_inbounds function Base.getindex(o::PyArray{T,N}, idx::Vararg{Int,N}) where {T,N}
     @boundscheck checkbounds(o, idx...)
-    offset = N==0 ? 0 : sum(map((i,s)->(i-1)*s, idx, o.byte_strides))
+    offset = _idx_to_offset(o, idx...)
     unsafe_load(o.ptr + offset)
 end
+
+Base.@propagate_inbounds function Base.getindex(o::PyArray, i::Int)
+    @boundscheck checkbounds(o, i)
+    offset = _idx_to_offset(o, i)
+    unsafe_load(o.ptr + offset)
+end
+
 Base.@propagate_inbounds function Base.setindex!(o::PyArray{T,N}, v, idx::Vararg{Int,N}) where {T,N}
     @boundscheck o.mutable || error("immutable")
     @boundscheck checkbounds(o, idx...)
-    offset = N==0 ? 0 : sum(map((i,s)->(i-1)*s, idx, o.byte_strides))
+    offset = _idx_to_offset(o, idx...)
+    unsafe_store!(o.ptr + offset, v)
+    o
+end
+
+Base.@propagate_inbounds function Base.setindex!(o::PyArray, v, i::Int)
+    @boundscheck o.mutable || error("immutable")
+    @boundscheck checkbounds(o, i)
+    offset = _idx_to_offset(o, i)
     unsafe_store!(o.ptr + offset, v)
     o
 end

@@ -79,9 +79,9 @@ function unsafe_pyjuliatype(::Type{T}) where {T}
     opts = (
         name = "julia.$T",
         # `supertype(DataType)` is `Type{T}` (NOT `Type`) which causes wierdness!
-        base = T === Any ? pyobjecttype() : T===DataType ? pyjuliatype(Type) : pyjuliatype(pyjulia_supertype(T)),
+        base = T === Any ? unsafe_pyobjecttype() : T===DataType ? unsafe_pyjuliatype(Type) : unsafe_pyjuliatype(pyjulia_supertype(T)),
     )
-    opts.base == C_NULL && return oftype(r, C_NULL)
+    isnull(opts.base) && return PYNULL
     if pyjulia_isconcrete(T)
         # only concrete types have instances and therefore require methods
         nb_opts = (
@@ -139,8 +139,9 @@ function unsafe_pyjuliatype(::Type{T}) where {T}
             basicsize = 0,
         )
     end
+    flags = (versiontag=true, getcharbuffer=true, sequencein=true, inplaceops=true, richcompare=true, weakrefs=true, iter=true, class=true, index=true, basetype=true)
     # make the type
-    t, c = newpytype(; opts...)
+    t, c = newpytype(; flags=flags, opts...)
     t = CPyJuliaTypeObject{T}(base=t)
     # put into a 0-dim array and take a pointer
     t = fill(t)
@@ -264,6 +265,21 @@ end
 
 Iterator(x) = Iterator(x, nothing)
 
+"""
+    PairSet(dict::AbstractDict{K,V}) :: AbstractSet{Pair{K,V}}
+
+The set of key-value pairs of `dict`.
+"""
+struct PairSet{K, V, D<:AbstractDict{K, V}} <: AbstractSet{Pair{K, V}}
+    dict :: D
+end
+
+Base.length(x::PairSet) = length(x.dict)
+
+Base.iterate(x::PairSet) = iterate(x.dict)
+Base.iterate(x::PairSet, st) = iterate(x.dict, st)
+
+Base.in(v, x::PairSet) = (v isa Pair) ? (v in x.dict) : false
 
 ### GENERATED RULES
 
@@ -584,3 +600,6 @@ pyjulia_abc(::Type{AbstractVector{T}}) where {T} = "collections.abc.Sequence"
 pyjulia_abc(::Type{AbstractArray{T,N}}) where {T,N} = "collections.abc.Collection"
 pyjulia_abc(::Type{AbstractDict{K,V}}) where {K,V} = "collections.abc.Mapping"
 pyjulia_abc(::Type{AbstractSet{T}}) where {T} = "collections.abc.Set"
+pyjulia_abc(::Type{Base.KeySet{K,D}}) where {K,D} = "collections.abc.KeysView"
+pyjulia_abc(::Type{Base.ValueIterator{D}}) where {D} = "collections.abc.ValuesView"
+pyjulia_abc(::Type{PairSet{K,V,D}}) where {K,V,D} = "collections.abc.ItemsView"

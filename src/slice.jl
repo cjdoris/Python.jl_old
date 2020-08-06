@@ -7,9 +7,9 @@ Base.@kwdef struct CPySliceObject <: AbstractCPySliceObject
     step :: PyPtr = C_NULL
 end
 
-unsafe_pyslice_start(o::PyObject) =
-    isnull(o) ? PYNULL : unsafe_pyobj(PyRef(uptr(CPySliceObject, o).start[], true))
-unsafe_pyslice_stop(o::PyObject) =
-    isnull(o) ? PYNULL : unsafe_pyobj(PyRef(uptr(CPySliceObject, o).stop[], true))
-unsafe_pyslice_step(o::PyObject) =
-    isnull(o) ? PYNULL : unsafe_pyobj(PyRef(uptr(CPySliceObject, o).step[], true))
+_unsafe_pyslice_start(o::AbstractPyRef) =
+    PyBorrowedRef(uptr(CPySliceObject, o).start[])
+_unsafe_pyslice_stop(o::AbstractPyRef) =
+    PyBorrowedRef(uptr(CPySliceObject, o).stop[])
+_unsafe_pyslice_step(o::AbstractPyRef) =
+    PyBorrowedRef(uptr(CPySliceObject, o).step[])

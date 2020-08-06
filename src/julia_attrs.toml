@@ -1,6 +1,6 @@
 [Any.__dealloc__]
 smeth = """function (o)
-    uptr(o).weaklist[] != C_NULL || ccall((:PyObject_ClearWeakRefs, PYLIB), Cvoid, (PyPtr,), o)
+    isnull(uptr(o).weaklist[]) || ccall((:PyObject_ClearWeakRefs, PYLIB), Cvoid, (PyPtr,), o)
     delete!(PYJLGCCACHE, ptr(o))
     nothing
 end"""
@@ -38,9 +38,9 @@ smeth = """function (o, _k, _v)
     k = @safe unsafe_pyconvertkey(o, _k)
     v = @safe unsafe_pyconvertvalue(o, k, _v)
     setindex!(o, v, k)
-    return unsafe_pynone()
+    return 0
     @label error
-    return PYNULL
+    return -1
 end"""
 if = "hasmethod(setindex!, Tuple{T, Union{}, Union{}})"
 
@@ -87,10 +87,16 @@ unwrap = false
 
 [Any.__contains__]
 smeth = """function(o, vo)
-    v = @safe unsafe_pyconvertvalue(o, vo)
-    return (v in o) ? 1 : 0
-    @label error
-    return -1
+    v = unsafe_pytryconvertvalue(o, vo)
+    if v.iserr
+        return -1
+    elseif v.isnothing
+        return 0
+    elseif v.value in o
+        return 1
+    else
+        return 0
+    end
 end"""
 if = "hasmethod(in, Tuple{Union{}, T})"
 
@@ -114,6 +120,39 @@ smeth = "o -> incref!(PyBorrowedRef(o))"
 unwrap = false
 catch = false
 
+[AbstractArray.__getitem__]
+smeth = """function (o, ko)
+    k = @safe unsafe_pyconvertarrayindices(o, ko)
+    if checkbounds(Bool, o, k...)
+        return unsafe_pyobj(o[k...])
+    else
+        pyerror_set_IndexError("array index out of bounds")
+    end
+    @label error
+    return PYNULL
+end"""
+
+[AbstractArray.__setitem__]
+smeth = """function (o, ko, vo)
+    k = @safe unsafe_pyconvertarrayindices(o, ko)
+    if !isa(k, Tuple{Vararg{Int}})
+        pyerror_set_TypeError("can only set single array items")
+        return -1
+    end
+    v = @safe unsafe_pyconvertvalue(o, vo)
+    if checkbounds(Bool, o, k...)
+        o[k...] = v
+        return 0
+    else
+        pyerror_set_IndexError("array index out of bounds")
+    end
+    @label error
+    return -1
+end"""
+
+[AbstractArray.shape]
+get = """o -> unsafe_pytuple_fromiter(size(o))"""
+
 [StridedArray.__array_interface__]
 get = """function (o)
     d = Dict{String, PyObject}()
@@ -131,7 +170,34 @@ get = """function (o)
 end"""
 
 [AbstractVector.__getitem_int__]
-smeth = "(o,i) -> unsafe_pyobj(getindex(o, i+1))"
+smeth = "(o,i) -> unsafe_pyobj(getindex(o, i+firstindex(o)))"
+
+[AbstractVector.index]
+meth = """function(o, vo)
+    v = unsafe_pytryconvertvalue(o, vo)
+    v.iserr && return PYNULL
+    if !v.isnothing
+        i = findfirst(==(v.value), o)
+        i === nothing || return unsafe_pyint(i-firstindex(o))
+    end
+    pyerror_set_ValueError("value not found")
+    return PYNULL
+end"""
+flags = ["onearg"]
+
+[AbstractVector.count]
+meth = """function(o, vo)
+    v = unsafe_pytryconvertvalue(o, vo)
+    if v.iserr
+        return PYNULL
+    elseif v.isnothing
+        n = 0
+    else
+        n = count(==(v.value), o)
+    end
+    return unsafe_pyint(n)
+end"""
+flags = ["onearg"]
 
 [AbstractVector.reverse]
 meth = "o -> (reverse!(o); unsafe_pynone())"
@@ -148,6 +214,147 @@ meth = "o -> (sort!(o); unsafe_pynone())"
 if = "hasmethod(sort!, Tuple{T})"
 flags = ["noargs"]
 
+[AbstractVector.append]
+meth = """function (o, vo)
+    v = @safe unsafe_pyconvertvalue(o, vo)
+    push!(o, v)
+    return unsafe_pynone()
+    @label error
+    return PYNULL
+end"""
+flags = ["onearg"]
+
+[AbstractVector.extend]
+meth = """function (o, vs)
+    vi = @safe unsafe_pyiter(vs)
+    while true
+        vo = unsafe_pyiter_next(vi)
+        if !isnull(vo)
+            v = @safe unsafe_pyconvertvalue(o, vo)
+            push!(o, v)
+        elseif pyerror_occurred()
+            return PYNULL
+        else
+            break
+        end
+    end
+    return unsafe_pynone()
+    @label error
+    return PYNULL
+end"""
+flags = ["onearg"]
+
+[AbstractVector.__iconcat__]
+smeth = """function (_o, _vs)
+    o = _unsafe_pyjulia_getvalue(_o)
+    vs = PyBorrowedRef(_vs)
+    vi = @safe unsafe_pyiter(vs)
+    while true
+        vo = unsafe_pyiter_next(vi)
+        if !isnull(vo)
+            v = @safe unsafe_pyconvertvalue(o, vo)
+            push!(o, v)
+        elseif pyerror_occurred()
+            return PYNULL
+        else
+            break
+        end
+    end
+    return unsafe_pyobj(PyRef(_o, true))
+    @label error
+    return PYNULL
+end"""
+unwrap = false
+
+[AbstractVector.__concat__]
+smeth = """function (o, vs)
+
+    # if vs is a julia wrapped array, use julia concatenation
+    if unsafe_pyisjulia(vs)
+        jvs = _unsafe_pyjulia_getvalue(vs)
+        if jvs isa AbstractVector
+            return unsafe_pyjulia([o; jvs])
+        end
+    end
+
+    # default: aggregate into a list
+    r = @safe unsafe_pylist_new()
+    for x in o
+        @safe unsafe_pylist_append(r, x)
+    end
+    vi = @safe unsafe_pyiter(vs)
+    while true
+        vo = unsafe_pyiter_next(vi)
+        if !isnull(vo)
+            @safe unsafe_pylist_append(r, vo)
+        elseif pyerror_occurred()
+            return PYNULL
+        else
+            break
+        end
+    end
+    return r
+    @label error
+    return PYNULL
+end"""
+
+[AbstractVector.__repeat__]
+smeth = """(o, n) -> unsafe_pyjulia(repeat(o, max(0, n)))
+"""
+
+[AbstractVector.__irepeat__]
+smeth = """function(_o, n)
+    o = _unsafe_pyjulia_getvalue(_o)
+    if n ≤ 0
+        empty!(o)
+    elseif n > 1
+        len = length(o)
+        for i in (len+1):(n*len)
+            push!(o, @inbounds(o[i-len]))
+        end
+    end
+    return unsafe_pyobj(PyRef(_o, true))
+    @label error
+    return PYNULL
+end"""
+unwrap = false
+
+[AbstractVector.pop]
+meth = """function (o, _a)
+    i, = @safe @unsafe_pyargparse _a (i::Int=-1,)
+    j = i < 0 ? lastindex(o)+i+1 : firstindex(o)+i
+    if isempty(o)
+        pyerror_set_IndexError("pop from empty vector")
+        @goto error
+    elseif checkbounds(Bool, o, j)
+        v = o[j]
+        deleteat!(o, j)
+    else
+        pyerror_set_IndexError("vector index out of bounds")
+        @goto error
+    end
+    return unsafe_pyobj(v)
+    @label error
+    return PYNULL
+end"""
+flags = ["varargs"]
+
+[AbstractVector.remove]
+meth = """function (o, vo)
+    v = unsafe_pytryconvertvalue(o, vo)
+    v.iserr && return PYNULL
+    if !v.isnothing
+        i = findfirst(==(v.value), o)
+        if i !== nothing
+            deleteat!(o, i)
+            return unsafe_pynone()
+        end
+    end
+    pyerror_set_ValueError("value not found")
+    return PYNULL
+end"""
+flags = ["onearg"]
+
 [AbstractDict.keys]
 meth = "o -> unsafe_pyjulia(keys(o))"
 flags = ["noargs"]
@@ -156,27 +363,40 @@ flags = ["noargs"]
 meth = "o -> unsafe_pyjulia(values(o))"
 flags = ["noargs"]
 
+[AbstractDict.__iter__]
+smeth = """o -> unsafe_pyjulia(Iterator(keys(o)))"""
+
 [AbstractDict.items]
-meth = "o -> unsafe_pyjulia(pairs(o))"
+meth = "o -> unsafe_pyjulia(PairSet(o))"
 flags = ["noargs"]
 
 [AbstractDict.get]
 meth = """function (o, _a)
     ko, d = @safe @unsafe_pyargparse _a (key::PyObject, default::PyObject=(@safe unsafe_pynone()))
-    k = @safe unsafe_pyconvertkey(o, ko)
-    v = get(o, k, d)
-    return unsafe_pyobj(v)
-    @label error
-    return PYNULL
+    k = unsafe_pytryconvertkey(o, ko)
+    if k.iserr
+        @label error
+        return PYNULL
+    elseif k.isnothing
+        return d
+    else
+        return unsafe_pyobj(get(o, k.value, d))
+    end
 end"""
 flags = ["varargs"]
 
 [AbstractDict.__contains__]
 smeth = """function (o, ko)
-    k = @safe unsafe_pyconvertkey(o, ko)
-    return unsafe_pybool(haskey(o, k)) ? 1 : 0
-    @label error
-    return -1
+    k = unsafe_pytryconvertkey(o, ko)
+    if k.iserr
+        return -1
+    elseif k.isnothing
+        return 0
+    elseif haskey(o, k.value)
+        return 1
+    else
+        return 0
+    end
 end"""
 
 [Number.__bool__]
@@ -241,7 +461,7 @@ meth = """function (o, _a)
     if d === nothing
         return unsafe_pyint(round(Integer, o))
     else
-        return unsafe_pyjulia(oftype(o, round(o, digits=d)))
+        return unsafe_pyjulia(round(o, digits=d))
     end
     @label error
     return PYNULL

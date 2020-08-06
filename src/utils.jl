@@ -92,13 +92,13 @@ nothingtoerror(r::ValueOrNothingOrError) = nothingtoerror(()->nothing, r)
 
 A pair `(p,c)` so that `Base.unsafe_pointer_to_objref(p)===o`, provided that `c` is not garbage collected.
 """
-function pointer_from_obj(o)
-    if isimmutable(o)
-        c = Ref{Any}(o)
-        p = unsafe_load(Ptr{Ptr{Cvoid}}(Base.pointer_from_objref(c)))
-    else
+function pointer_from_obj(o::T) where {T}
+    if T.mutable
         c = o
         p = Base.pointer_from_objref(o)
+    else
+        c = Ref{Any}(o)
+        p = unsafe_load(Ptr{Ptr{Cvoid}}(Base.pointer_from_objref(c)))
     end
     p, c
 end
@@ -154,3 +154,26 @@ isfailedconversion(err, ::Type{T}, ::Type{S}, x) where {T,S} =
 
 isfailedconversion(err, ::Type{T}, ::Type{Number}, x::Number) where {T} =
     err isa InexactError || isfailedconversion(err, T, supertype(Number), x)
+
+
+islittleendian() =
+    Base.ENDIAN_BOM == 0x04030201 ? true  :
+    Base.ENDIAN_BOM == 0x01020304 ? false :
+    error("cannot determine endianness")
+
+make_f_contig_strides(elsz) = ()
+make_f_contig_strides(elsz, sz1, sz...) = (elsz, (sz1 .* make_f_contig_strides(elsz, sz...))...)
+
+make_c_contig_strides(elsz, sz...) = reverse(make_f_contig_strides(elsz, reverse(sz)...))
+
+struct PaddingBytes{N}
+    bytes :: NTuple{N,UInt8}
+end
+
+struct ByteReversed{T}
+    reversed :: T
+end
+
+struct PascalString{N}
+    bytes :: NTuple{N,UInt8}
+end

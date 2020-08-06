@@ -1433,6 +1433,50 @@ pytruth(args...; kwargs...) = safe(unsafe_pytruth(args...; kwargs...))
 export pytruth
 
 
+function unsafe_pyconcat(x1::Any, x2::Any)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    if !isa(x2, AbstractPyRef)
+        x2 = unsafe_pyobj(x2)
+        isnull(x2) && return PYNULL
+    end
+
+    r = ccall((:PySequence_Concat, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyRef(r, false))
+    end
+end
+pyconcat(args...; kwargs...) = safe(unsafe_pyconcat(args...; kwargs...))
+export pyconcat
+
+
+function unsafe_pycontains(x1::Any, x2::Any)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return ValueOrError{Bool}()
+    end
+
+    if !isa(x2, AbstractPyRef)
+        x2 = unsafe_pyobj(x2)
+        isnull(x2) && return ValueOrError{Bool}()
+    end
+
+    r = ccall((:PySequence_Contains, PYLIB), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if r == -1
+        return ValueOrError{Bool}()
+    else
+        return ValueOrError{Bool}(r != 0)
+    end
+end
+pycontains(args...; kwargs...) = safe(unsafe_pycontains(args...; kwargs...))
+export pycontains
+
+
 pyerror_occurred_ZeroDivisionError() = pyerror_occurred(pyexc_ZeroDivisionError_type())
 pyerror_occurred_ZeroDivisionError(args...; kwargs...) = safe(unsafe_pyerror_occurred_ZeroDivisionError(args...; kwargs...))
 export pyerror_occurred_ZeroDivisionError
@@ -1726,6 +1770,19 @@ pyerror_set_BufferError(args...; kwargs...) = safe(unsafe_pyerror_set_BufferErro
 export pyerror_set_BufferError
 
 
+function unsafe_pytuple(x1::Any)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    r = ccall((:PySequence_Tuple, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid},), x1)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyRef(r, false))
+    end
+end
 unsafe_pytuple(args...; kwargs...) = unsafe_pycall_args(pytupletype(), args, kwargs)
 pytuple(args...; kwargs...) = safe(unsafe_pytuple(args...; kwargs...))
 export pytuple
@@ -2016,6 +2073,45 @@ end
 pyerror_occurred_ReferenceError() = pyerror_occurred(pyexc_ReferenceError_type())
 pyerror_occurred_ReferenceError(args...; kwargs...) = safe(unsafe_pyerror_occurred_ReferenceError(args...; kwargs...))
 export pyerror_occurred_ReferenceError
+
+
+function unsafe_pyirepeat(x1::Any, x2::Integer)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    r = ccall((:PySequence_InPlaceRepeat, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, CPy_ssize_t), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyRef(r, false))
+    end
+end
+pyirepeat(args...; kwargs...) = safe(unsafe_pyirepeat(args...; kwargs...))
+export pyirepeat
+
+
+function unsafe_pyiconcat(x1::Any, x2::Any)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    if !isa(x2, AbstractPyRef)
+        x2 = unsafe_pyobj(x2)
+        isnull(x2) && return PYNULL
+    end
+
+    r = ccall((:PySequence_InPlaceConcat, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyRef(r, false))
+    end
+end
+pyiconcat(args...; kwargs...) = safe(unsafe_pyiconcat(args...; kwargs...))
+export pyiconcat
 
 
 unsafe_pyobject(args...; kwargs...) = unsafe_pycall_args(pyobjecttype(), args, kwargs)
@@ -2391,10 +2487,38 @@ pyexc_OSError_type(args...; kwargs...) = safe(unsafe_pyexc_OSError_type(args...;
 export pyexc_OSError_type
 
 
+function unsafe_pytuple_size(x1::Any)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return nothing
+    end
+
+    r = ccall((:PyTuple_Size, PYLIB), CPy_ssize_t, (Ptr{Cvoid},), x1)
+    return r
+end
+
+
 pyerror_set_ImportError() = pyerror_set(pyexc_ImportError_type())
 pyerror_set_ImportError(arg) = pyerror_set(pyexc_ImportError_type(), arg)
 pyerror_set_ImportError(args...; kwargs...) = safe(unsafe_pyerror_set_ImportError(args...; kwargs...))
 export pyerror_set_ImportError
+
+
+function unsafe_pyrepeat(x1::Any, x2::Integer)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    r = ccall((:PySequence_Repeat, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid}, CPy_ssize_t), x1, x2)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyRef(r, false))
+    end
+end
+pyrepeat(args...; kwargs...) = safe(unsafe_pyrepeat(args...; kwargs...))
+export pyrepeat
 
 
 function unsafe_pysetitem(x1::Any, x2::Any, x3::Any)
@@ -2833,6 +2957,24 @@ pyrealabc(args...; kwargs...) = safe(unsafe_pyrealabc(args...; kwargs...))
 export pyrealabc
 
 
+function unsafe_pylist(x1::Any)
+    if !isa(x1, AbstractPyRef)
+        x1 = unsafe_pyobj(x1)
+        isnull(x1) && return PYNULL
+    end
+
+    r = ccall((:PySequence_List, PYLIB), Ptr{Cvoid}, (Ptr{Cvoid},), x1)
+    if r == C_NULL
+        return PYNULL
+    else
+        return unsafe_pyobj(PyRef(r, false))
+    end
+end
+unsafe_pylist(args...; kwargs...) = unsafe_pycall_args(pylisttype(), args, kwargs)
+pylist(args...; kwargs...) = safe(unsafe_pylist(args...; kwargs...))
+export pylist
+
+
 pyerror_occurred_NotImplementedError() = pyerror_occurred(pyexc_NotImplementedError_type())
 pyerror_occurred_NotImplementedError(args...; kwargs...) = safe(unsafe_pyerror_occurred_NotImplementedError(args...; kwargs...))
 export pyerror_occurred_NotImplementedError
@@ -2841,11 +2983,6 @@ export pyerror_occurred_NotImplementedError
 unsafe_pytime(args...; kwargs...) = unsafe_pycall_args(pytimetype(), args, kwargs)
 pytime(args...; kwargs...) = safe(unsafe_pytime(args...; kwargs...))
 export pytime
-
-
-unsafe_pylist(args...; kwargs...) = unsafe_pycall_args(pylisttype(), args, kwargs)
-pylist(args...; kwargs...) = safe(unsafe_pylist(args...; kwargs...))
-export pylist
 
 
 pyerror_set_UnicodeError() = pyerror_set(pyexc_UnicodeError_type())

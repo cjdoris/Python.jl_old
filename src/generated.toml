@@ -415,6 +415,9 @@ safe = false
 cachedobj = {cobj="PyTuple_Type"}
 caller = "pytuple"
 
+[pytuple]
+cfunc = "PySequence_Tuple O O"
+
 [pyistuple]
 typechecks_fast = "CPy_TPFLAGS_TUPLE_SUBCLASS"
 
@@ -426,11 +429,18 @@ safe = false
 cfunc = "PyTuple_SetItem O =Any/CPy_ssize_t !O V"
 safe = false
 
+[pytuple_size]
+cfunc = "PyTuple_Size O ==CPy_ssize_t"
+safe = false
+
 ### LIST
 
 [pylisttype]
 cachedobj = {cobj="PyList_Type"}
 caller = "pylist"
+
+[pylist]
+cfunc = "PySequence_List O O"
 
 [pyislist]
 typechecks_fast = "CPy_TPFLAGS_LIST_SUBCLASS"
@@ -755,3 +765,20 @@ caller = "pytextiowrapper"
 [pystringiotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "StringIO")"""}
 caller = "pystringio"
+
+### SEQUENCE
+
+[pyconcat]
+cfunc = "PySequence_Concat O O O"
+
+[pyiconcat]
+cfunc = "PySequence_InPlaceConcat O O O"
+
+[pyrepeat]
+cfunc = "PySequence_Repeat O =Integer/CPy_ssize_t O"
+
+[pyirepeat]
+cfunc = "PySequence_InPlaceRepeat O =Integer/CPy_ssize_t O"
+
+[pycontains]
+cfunc = "PySequence_Contains O O B"

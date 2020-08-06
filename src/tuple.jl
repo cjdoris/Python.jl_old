@@ -8,3 +8,6 @@ function unsafe_pytuple_fromiter(xs)
 end
 pytuple_fromiter(xs) = safe(unsafe_pytuple_fromiter(xs))
 export pytuple_fromiter
+
+_unsafe_pytuple_getitem(o::AbstractPyRef, i::Integer) =
+    PyBorrowedRef(ccall((:PyTuple_GetItem, PYLIB), PyPtr, (PyPtr, CPy_ssize_t), o, i))

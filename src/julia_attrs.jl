@@ -479,6 +479,111 @@ pyjulia_attrdef(::Val{:seekable}, ::Type{T}, ::Type{IO}, ::Val{2}) where {T<:IO}
 )
 
 
+### AbstractArray.__setitem__
+
+pyjulia_attrkind(::Val{:__setitem__}, ::Type{T}) where {T<:AbstractArray} =
+    :special
+
+pyjulia_attrdef(::Val{:__setitem__}, ::Type{T}) where {T<:AbstractArray} =
+    pyjulia_attrdef(Val(:__setitem__), T, AbstractArray, Val(1))
+
+const _pyjulia_implmethod___setitem___1_1 = function (o, ko, vo)
+    k = @safe unsafe_pyconvertarrayindices(o, ko)
+    if !isa(k, Tuple{Vararg{Int}})
+        pyerror_set_TypeError("can only set single array items")
+        return -1
+    end
+    v = @safe unsafe_pyconvertvalue(o, vo)
+    if checkbounds(Bool, o, k...)
+        o[k...] = v
+        return 0
+    else
+        pyerror_set_IndexError("array index out of bounds")
+    end
+    @label error
+    return -1
+end
+function pyjulia_implmethod___setitem___1_1(y1, y2, y3)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    x3 = pyjulia_argval(y3)
+    try
+        r::Cint = pyjulia_retval(_pyjulia_implmethod___setitem___1_1(x1, x2, x3))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return (zero(Cint) - one(Cint))
+    end
+end
+
+pyjulia_attrdef(::Val{:__setitem__}, ::Type{T}, ::Type{AbstractArray}, ::Val{1}) where {T<:AbstractArray} =
+    @cfunction(pyjulia_implmethod___setitem___1_1, Cint, (Ptr{CPyJuliaObject{T}}, PyPtr, PyPtr))
+
+
+### AbstractArray.shape
+
+pyjulia_attrkind(::Val{:shape}, ::Type{T}) where {T<:AbstractArray} =
+    :property
+
+pyjulia_attrdef(::Val{:shape}, ::Type{T}) where {T<:AbstractArray} =
+    pyjulia_attrdef(Val(:shape), T, AbstractArray, Val(1))
+
+const _pyjulia_implgetter_shape_1_1 = o -> unsafe_pytuple_fromiter(size(o))
+function pyjulia_implgetter_shape_1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implgetter_shape_1_1(x1))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:shape}, ::Type{T}, ::Type{AbstractArray}, ::Val{1}) where {T<:AbstractArray} = (
+    name = "shape",
+    get = @cfunction(pyjulia_implgetter_shape_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, Ptr{Cvoid})),
+)
+
+
+### AbstractArray.__getitem__
+
+pyjulia_attrkind(::Val{:__getitem__}, ::Type{T}) where {T<:AbstractArray} =
+    :special
+
+pyjulia_attrdef(::Val{:__getitem__}, ::Type{T}) where {T<:AbstractArray} =
+    pyjulia_attrdef(Val(:__getitem__), T, AbstractArray, Val(1))
+
+const _pyjulia_implmethod___getitem___1_1 = function (o, ko)
+    k = @safe unsafe_pyconvertarrayindices(o, ko)
+    if checkbounds(Bool, o, k...)
+        return unsafe_pyobj(o[k...])
+    else
+        pyerror_set_IndexError("array index out of bounds")
+    end
+    @label error
+    return PYNULL
+end
+function pyjulia_implmethod___getitem___1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___getitem___1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:__getitem__}, ::Type{T}, ::Type{AbstractArray}, ::Val{1}) where {T<:AbstractArray} =
+    @cfunction(pyjulia_implmethod___getitem___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr))
+
+
 ### Real.__float__
 
 pyjulia_attrkind(::Val{:__float__}, ::Type{T}) where {T<:Real} =
@@ -581,7 +686,7 @@ const _pyjulia_implmethod___round___1_1 = function (o, _a)
     if d === nothing
         return unsafe_pyint(round(Integer, o))
     else
-        return unsafe_pyjulia(oftype(o, round(o, digits=d)))
+        return unsafe_pyjulia(round(o, digits=d))
     end
     @label error
     return PYNULL
@@ -867,7 +972,7 @@ pyjulia_attrkind(::Val{:items}, ::Type{T}) where {T<:AbstractDict} =
 pyjulia_attrdef(::Val{:items}, ::Type{T}) where {T<:AbstractDict} =
     pyjulia_attrdef(Val(:items), T, AbstractDict, Val(1))
 
-const _pyjulia_implmethod_items_1_1 = o -> unsafe_pyjulia(pairs(o))
+const _pyjulia_implmethod_items_1_1 = o -> unsafe_pyjulia(PairSet(o))
 function pyjulia_implmethod_items_1_1(y1, y2)
     x1 = pyjulia_argval(y1)
     x2 = pyjulia_argval(y2)
@@ -886,6 +991,31 @@ pyjulia_attrdef(::Val{:items}, ::Type{T}, ::Type{AbstractDict}, ::Val{1}) where 
     meth = @cfunction(pyjulia_implmethod_items_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr)),
     flags = 0x0000000000000004,
 )
+
+
+### AbstractDict.__iter__
+
+pyjulia_attrkind(::Val{:__iter__}, ::Type{T}) where {T<:AbstractDict} =
+    :special
+
+pyjulia_attrdef(::Val{:__iter__}, ::Type{T}) where {T<:AbstractDict} =
+    pyjulia_attrdef(Val(:__iter__), T, AbstractDict, Val(1))
+
+const _pyjulia_implmethod___iter___2_1 = o -> unsafe_pyjulia(Iterator(keys(o)))
+function pyjulia_implmethod___iter___2_1(y1)
+    x1 = pyjulia_argval(y1)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___iter___2_1(x1))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:__iter__}, ::Type{T}, ::Type{AbstractDict}, ::Val{1}) where {T<:AbstractDict} =
+    @cfunction(pyjulia_implmethod___iter___2_1, PyPtr, (Ptr{CPyJuliaObject{T}},))
 
 
 ### AbstractDict.keys
@@ -955,10 +1085,16 @@ pyjulia_attrdef(::Val{:__contains__}, ::Type{T}) where {T<:AbstractDict} =
     pyjulia_attrdef(Val(:__contains__), T, AbstractDict, Val(1))
 
 const _pyjulia_implmethod___contains___1_1 = function (o, ko)
-    k = @safe unsafe_pyconvertkey(o, ko)
-    return unsafe_pybool(haskey(o, k)) ? 1 : 0
-    @label error
-    return -1
+    k = unsafe_pytryconvertkey(o, ko)
+    if k.iserr
+        return -1
+    elseif k.isnothing
+        return 0
+    elseif haskey(o, k.value)
+        return 1
+    else
+        return 0
+    end
 end
 function pyjulia_implmethod___contains___1_1(y1, y2)
     x1 = pyjulia_argval(y1)
@@ -987,11 +1123,15 @@ pyjulia_attrdef(::Val{:get}, ::Type{T}) where {T<:AbstractDict} =
 
 const _pyjulia_implmethod_get_1_1 = function (o, _a)
     ko, d = @safe @unsafe_pyargparse _a (key::PyObject, default::PyObject=(@safe unsafe_pynone()))
-    k = @safe unsafe_pyconvertkey(o, ko)
-    v = get(o, k, d)
-    return unsafe_pyobj(v)
-    @label error
-    return PYNULL
+    k = unsafe_pytryconvertkey(o, ko)
+    if k.iserr
+        @label error
+        return PYNULL
+    elseif k.isnothing
+        return d
+    else
+        return unsafe_pyobj(get(o, k.value, d))
+    end
 end
 function pyjulia_implmethod_get_1_1(y1, y2)
     x1 = pyjulia_argval(y1)
@@ -1085,6 +1225,346 @@ pyjulia_attrdef(::Val{:reverse}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) wh
 )
 
 
+### AbstractVector.pop
+
+pyjulia_attrkind(::Val{:pop}, ::Type{T}) where {T<:AbstractVector} =
+    :method
+
+pyjulia_attrdef(::Val{:pop}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:pop), T, AbstractVector, Val(1))
+
+const _pyjulia_implmethod_pop_1_1 = function (o, _a)
+    i, = @safe @unsafe_pyargparse _a (i::Int=-1,)
+    j = i < 0 ? lastindex(o)+i+1 : firstindex(o)+i
+    if isempty(o)
+        pyerror_set_IndexError("pop from empty vector")
+        @goto error
+    elseif checkbounds(Bool, o, j)
+        v = o[j]
+        deleteat!(o, j)
+    else
+        pyerror_set_IndexError("vector index out of bounds")
+        @goto error
+    end
+    return unsafe_pyobj(v)
+    @label error
+    return PYNULL
+end
+function pyjulia_implmethod_pop_1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod_pop_1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:pop}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} = (
+    name = "pop",
+    meth = @cfunction(pyjulia_implmethod_pop_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr)),
+    flags = 0x0000000000000001,
+)
+
+
+### AbstractVector.remove
+
+pyjulia_attrkind(::Val{:remove}, ::Type{T}) where {T<:AbstractVector} =
+    :method
+
+pyjulia_attrdef(::Val{:remove}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:remove), T, AbstractVector, Val(1))
+
+const _pyjulia_implmethod_remove_1_1 = function (o, vo)
+    v = unsafe_pytryconvertvalue(o, vo)
+    v.iserr && return PYNULL
+    if !v.isnothing
+        i = findfirst(==(v.value), o)
+        if i !== nothing
+            deleteat!(o, i)
+            return unsafe_pynone()
+        end
+    end
+    pyerror_set_ValueError("value not found")
+    return PYNULL
+end
+function pyjulia_implmethod_remove_1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod_remove_1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:remove}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} = (
+    name = "remove",
+    meth = @cfunction(pyjulia_implmethod_remove_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr)),
+    flags = 0x0000000000000008,
+)
+
+
+### AbstractVector.extend
+
+pyjulia_attrkind(::Val{:extend}, ::Type{T}) where {T<:AbstractVector} =
+    :method
+
+pyjulia_attrdef(::Val{:extend}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:extend), T, AbstractVector, Val(1))
+
+const _pyjulia_implmethod_extend_1_1 = function (o, vs)
+    vi = @safe unsafe_pyiter(vs)
+    while true
+        vo = unsafe_pyiter_next(vi)
+        if !isnull(vo)
+            v = @safe unsafe_pyconvertvalue(o, vo)
+            push!(o, v)
+        elseif pyerror_occurred()
+            return PYNULL
+        else
+            break
+        end
+    end
+    return unsafe_pynone()
+    @label error
+    return PYNULL
+end
+function pyjulia_implmethod_extend_1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod_extend_1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:extend}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} = (
+    name = "extend",
+    meth = @cfunction(pyjulia_implmethod_extend_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr)),
+    flags = 0x0000000000000008,
+)
+
+
+### AbstractVector.__irepeat__
+
+pyjulia_attrkind(::Val{:__irepeat__}, ::Type{T}) where {T<:AbstractVector} =
+    :special
+
+pyjulia_attrdef(::Val{:__irepeat__}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:__irepeat__), T, AbstractVector, Val(1))
+
+const _pyjulia_implmethod___irepeat___1_1 = function(_o, n)
+    o = _unsafe_pyjulia_getvalue(_o)
+    if n ≤ 0
+        empty!(o)
+    elseif n > 1
+        len = length(o)
+        for i in (len+1):(n*len)
+            push!(o, @inbounds(o[i-len]))
+        end
+    end
+    return unsafe_pyobj(PyRef(_o, true))
+    @label error
+    return PYNULL
+end
+function pyjulia_implmethod___irepeat___1_1(x1, x2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___irepeat___1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:__irepeat__}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} =
+    @cfunction(pyjulia_implmethod___irepeat___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, CPy_ssize_t))
+
+
+### AbstractVector.count
+
+pyjulia_attrkind(::Val{:count}, ::Type{T}) where {T<:AbstractVector} =
+    :method
+
+pyjulia_attrdef(::Val{:count}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:count), T, AbstractVector, Val(1))
+
+const _pyjulia_implmethod_count_1_1 = function(o, vo)
+    v = unsafe_pytryconvertvalue(o, vo)
+    if v.iserr
+        return PYNULL
+    elseif v.isnothing
+        n = 0
+    else
+        n = count(==(v.value), o)
+    end
+    return unsafe_pyint(n)
+end
+function pyjulia_implmethod_count_1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod_count_1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:count}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} = (
+    name = "count",
+    meth = @cfunction(pyjulia_implmethod_count_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr)),
+    flags = 0x0000000000000008,
+)
+
+
+### AbstractVector.__repeat__
+
+pyjulia_attrkind(::Val{:__repeat__}, ::Type{T}) where {T<:AbstractVector} =
+    :special
+
+pyjulia_attrdef(::Val{:__repeat__}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:__repeat__), T, AbstractVector, Val(1))
+
+const _pyjulia_implmethod___repeat___1_1 = (o, n) -> unsafe_pyjulia(repeat(o, max(0, n)))
+
+function pyjulia_implmethod___repeat___1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___repeat___1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:__repeat__}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} =
+    @cfunction(pyjulia_implmethod___repeat___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, CPy_ssize_t))
+
+
+### AbstractVector.__iconcat__
+
+pyjulia_attrkind(::Val{:__iconcat__}, ::Type{T}) where {T<:AbstractVector} =
+    :special
+
+pyjulia_attrdef(::Val{:__iconcat__}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:__iconcat__), T, AbstractVector, Val(1))
+
+const _pyjulia_implmethod___iconcat___1_1 = function (_o, _vs)
+    o = _unsafe_pyjulia_getvalue(_o)
+    vs = PyBorrowedRef(_vs)
+    vi = @safe unsafe_pyiter(vs)
+    while true
+        vo = unsafe_pyiter_next(vi)
+        if !isnull(vo)
+            v = @safe unsafe_pyconvertvalue(o, vo)
+            push!(o, v)
+        elseif pyerror_occurred()
+            return PYNULL
+        else
+            break
+        end
+    end
+    return unsafe_pyobj(PyRef(_o, true))
+    @label error
+    return PYNULL
+end
+function pyjulia_implmethod___iconcat___1_1(x1, x2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___iconcat___1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:__iconcat__}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} =
+    @cfunction(pyjulia_implmethod___iconcat___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr))
+
+
+### AbstractVector.__getitem_int__
+
+pyjulia_attrkind(::Val{:__getitem_int__}, ::Type{T}) where {T<:AbstractVector} =
+    :special
+
+pyjulia_attrdef(::Val{:__getitem_int__}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:__getitem_int__), T, AbstractVector, Val(1))
+
+const _pyjulia_implmethod___getitem_int___1_1 = (o,i) -> unsafe_pyobj(getindex(o, i+firstindex(o)))
+function pyjulia_implmethod___getitem_int___1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___getitem_int___1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:__getitem_int__}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} =
+    @cfunction(pyjulia_implmethod___getitem_int___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, CPy_ssize_t))
+
+
+### AbstractVector.index
+
+pyjulia_attrkind(::Val{:index}, ::Type{T}) where {T<:AbstractVector} =
+    :method
+
+pyjulia_attrdef(::Val{:index}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:index), T, AbstractVector, Val(1))
+
+const _pyjulia_implmethod_index_1_1 = function(o, vo)
+    v = unsafe_pytryconvertvalue(o, vo)
+    v.iserr && return PYNULL
+    if !v.isnothing
+        i = findfirst(==(v.value), o)
+        i === nothing || return unsafe_pyint(i-firstindex(o))
+    end
+    pyerror_set_ValueError("value not found")
+    return PYNULL
+end
+function pyjulia_implmethod_index_1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod_index_1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:index}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} = (
+    name = "index",
+    meth = @cfunction(pyjulia_implmethod_index_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr)),
+    flags = 0x0000000000000008,
+)
+
+
 ### AbstractVector.__reversed__
 
 pyjulia_attrkind(::Val{:__reversed__}, ::Type{T}) where {T<:AbstractVector} =
@@ -1113,6 +1593,41 @@ pyjulia_attrdef(::Val{:__reversed__}, ::Type{T}, ::Type{AbstractVector}, ::Val{1
     name = "__reversed__",
     meth = @cfunction(pyjulia_implmethod___reversed___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr)),
     flags = 0x0000000000000004,
+)
+
+
+### AbstractVector.append
+
+pyjulia_attrkind(::Val{:append}, ::Type{T}) where {T<:AbstractVector} =
+    :method
+
+pyjulia_attrdef(::Val{:append}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:append), T, AbstractVector, Val(1))
+
+const _pyjulia_implmethod_append_1_1 = function (o, vo)
+    v = @safe unsafe_pyconvertvalue(o, vo)
+    push!(o, v)
+    return unsafe_pynone()
+    @label error
+    return PYNULL
+end
+function pyjulia_implmethod_append_1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod_append_1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyobj(err)
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:append}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} = (
+    name = "append",
+    meth = @cfunction(pyjulia_implmethod_append_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr)),
+    flags = 0x0000000000000008,
 )
 
 
@@ -1147,20 +1662,49 @@ pyjulia_attrdef(::Val{:sort}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where
 )
 
 
-### AbstractVector.__getitem_int__
+### AbstractVector.__concat__
 
-pyjulia_attrkind(::Val{:__getitem_int__}, ::Type{T}) where {T<:AbstractVector} =
+pyjulia_attrkind(::Val{:__concat__}, ::Type{T}) where {T<:AbstractVector} =
     :special
 
-pyjulia_attrdef(::Val{:__getitem_int__}, ::Type{T}) where {T<:AbstractVector} =
-    pyjulia_attrdef(Val(:__getitem_int__), T, AbstractVector, Val(1))
+pyjulia_attrdef(::Val{:__concat__}, ::Type{T}) where {T<:AbstractVector} =
+    pyjulia_attrdef(Val(:__concat__), T, AbstractVector, Val(1))
 
-const _pyjulia_implmethod___getitem_int___1_1 = (o,i) -> unsafe_pyobj(getindex(o, i+1))
-function pyjulia_implmethod___getitem_int___1_1(y1, y2)
+const _pyjulia_implmethod___concat___1_1 = function (o, vs)
+
+    # if vs is a julia wrapped array, use julia concatenation
+    if unsafe_pyisjulia(vs)
+        jvs = _unsafe_pyjulia_getvalue(vs)
+        if jvs isa AbstractVector
+            return unsafe_pyjulia([o; jvs])
+        end
+    end
+
+    # default: aggregate into a list
+    r = @safe unsafe_pylist_new()
+    for x in o
+        @safe unsafe_pylist_append(r, x)
+    end
+    vi = @safe unsafe_pyiter(vs)
+    while true
+        vo = unsafe_pyiter_next(vi)
+        if !isnull(vo)
+            @safe unsafe_pylist_append(r, vo)
+        elseif pyerror_occurred()
+            return PYNULL
+        else
+            break
+        end
+    end
+    return r
+    @label error
+    return PYNULL
+end
+function pyjulia_implmethod___concat___1_1(y1, y2)
     x1 = pyjulia_argval(y1)
     x2 = pyjulia_argval(y2)
     try
-        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___getitem_int___1_1(x1, x2))
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___concat___1_1(x1, x2))
         return r
     catch err
         perr = unsafe_pyobj(err)
@@ -1169,8 +1713,8 @@ function pyjulia_implmethod___getitem_int___1_1(y1, y2)
     end
 end
 
-pyjulia_attrdef(::Val{:__getitem_int__}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} =
-    @cfunction(pyjulia_implmethod___getitem_int___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, CPy_ssize_t))
+pyjulia_attrdef(::Val{:__concat__}, ::Type{T}, ::Type{AbstractVector}, ::Val{1}) where {T<:AbstractVector} =
+    @cfunction(pyjulia_implmethod___concat___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr))
 
 
 ### AnyComplex.real
@@ -1268,20 +1812,20 @@ pyjulia_attrdef(::Val{:__setitem__}, ::Type{T}) where {T<:Any} =
     (hasmethod(setindex!, Tuple{T, Union{}, Union{}})) ? pyjulia_attrdef(Val(:__setitem__), T, Any, Val(1)) :
     error("no matching attr")
 
-const _pyjulia_implmethod___setitem___1_1 = function (o, _k, _v)
+const _pyjulia_implmethod___setitem___2_1 = function (o, _k, _v)
     k = @safe unsafe_pyconvertkey(o, _k)
     v = @safe unsafe_pyconvertvalue(o, k, _v)
     setindex!(o, v, k)
-    return unsafe_pynone()
+    return 0
     @label error
-    return PYNULL
+    return -1
 end
-function pyjulia_implmethod___setitem___1_1(y1, y2, y3)
+function pyjulia_implmethod___setitem___2_1(y1, y2, y3)
     x1 = pyjulia_argval(y1)
     x2 = pyjulia_argval(y2)
     x3 = pyjulia_argval(y3)
     try
-        r::Cint = pyjulia_retval(_pyjulia_implmethod___setitem___1_1(x1, x2, x3))
+        r::Cint = pyjulia_retval(_pyjulia_implmethod___setitem___2_1(x1, x2, x3))
         return r
     catch err
         perr = unsafe_pyobj(err)
@@ -1291,7 +1835,7 @@ function pyjulia_implmethod___setitem___1_1(y1, y2, y3)
 end
 
 pyjulia_attrdef(::Val{:__setitem__}, ::Type{T}, ::Type{Any}, ::Val{1}) where {T<:Any} =
-    @cfunction(pyjulia_implmethod___setitem___1_1, Cint, (Ptr{CPyJuliaObject{T}}, PyPtr, PyPtr))
+    @cfunction(pyjulia_implmethod___setitem___2_1, Cint, (Ptr{CPyJuliaObject{T}}, PyPtr, PyPtr))
 
 
 ### Any.__iter__
@@ -1304,11 +1848,11 @@ pyjulia_attrdef(::Val{:__iter__}, ::Type{T}) where {T<:Any} =
     (hasmethod(iterate, Tuple{T})) ? pyjulia_attrdef(Val(:__iter__), T, Any, Val(1)) :
     error("no matching attr")
 
-const _pyjulia_implmethod___iter___2_1 = o -> unsafe_pyjulia(Iterator(o))
-function pyjulia_implmethod___iter___2_1(y1)
+const _pyjulia_implmethod___iter___3_1 = o -> unsafe_pyjulia(Iterator(o))
+function pyjulia_implmethod___iter___3_1(y1)
     x1 = pyjulia_argval(y1)
     try
-        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___iter___2_1(x1))
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___iter___3_1(x1))
         return r
     catch err
         perr = unsafe_pyobj(err)
@@ -1318,7 +1862,7 @@ function pyjulia_implmethod___iter___2_1(y1)
 end
 
 pyjulia_attrdef(::Val{:__iter__}, ::Type{T}, ::Type{Any}, ::Val{1}) where {T<:Any} =
-    @cfunction(pyjulia_implmethod___iter___2_1, PyPtr, (Ptr{CPyJuliaObject{T}},))
+    @cfunction(pyjulia_implmethod___iter___3_1, PyPtr, (Ptr{CPyJuliaObject{T}},))
 
 
 ### Any.__contains__
@@ -1332,10 +1876,16 @@ pyjulia_attrdef(::Val{:__contains__}, ::Type{T}) where {T<:Any} =
     error("no matching attr")
 
 const _pyjulia_implmethod___contains___2_1 = function(o, vo)
-    v = @safe unsafe_pyconvertvalue(o, vo)
-    return (v in o) ? 1 : 0
-    @label error
-    return -1
+    v = unsafe_pytryconvertvalue(o, vo)
+    if v.iserr
+        return -1
+    elseif v.isnothing
+        return 0
+    elseif v.value in o
+        return 1
+    else
+        return 0
+    end
 end
 function pyjulia_implmethod___contains___2_1(y1, y2)
     x1 = pyjulia_argval(y1)
@@ -1363,7 +1913,7 @@ pyjulia_attrdef(::Val{:__dealloc__}, ::Type{T}) where {T<:Any} =
     pyjulia_attrdef(Val(:__dealloc__), T, Any, Val(1))
 
 const _pyjulia_implmethod___dealloc___1_1 = function (o)
-    uptr(o).weaklist[] != C_NULL || ccall((:PyObject_ClearWeakRefs, PYLIB), Cvoid, (PyPtr,), o)
+    isnull(uptr(o).weaklist[]) || ccall((:PyObject_ClearWeakRefs, PYLIB), Cvoid, (PyPtr,), o)
     delete!(PYJLGCCACHE, ptr(o))
     nothing
 end
@@ -1386,17 +1936,17 @@ pyjulia_attrdef(::Val{:__getitem__}, ::Type{T}) where {T<:Any} =
     (hasmethod(getindex, Tuple{T, Union{}})) ? pyjulia_attrdef(Val(:__getitem__), T, Any, Val(1)) :
     error("no matching attr")
 
-const _pyjulia_implmethod___getitem___1_1 = function (o, _k)
+const _pyjulia_implmethod___getitem___2_1 = function (o, _k)
     k = @safe unsafe_pyconvertkey(o, _k)
     return unsafe_pyobj(getindex(o, k))
     @label error
     return PYNULL
 end
-function pyjulia_implmethod___getitem___1_1(y1, y2)
+function pyjulia_implmethod___getitem___2_1(y1, y2)
     x1 = pyjulia_argval(y1)
     x2 = pyjulia_argval(y2)
     try
-        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___getitem___1_1(x1, x2))
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___getitem___2_1(x1, x2))
         return r
     catch err
         perr = unsafe_pyobj(err)
@@ -1406,7 +1956,7 @@ function pyjulia_implmethod___getitem___1_1(y1, y2)
 end
 
 pyjulia_attrdef(::Val{:__getitem__}, ::Type{T}, ::Type{Any}, ::Val{1}) where {T<:Any} =
-    @cfunction(pyjulia_implmethod___getitem___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr))
+    @cfunction(pyjulia_implmethod___getitem___2_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr))
 
 
 ### Any.__getattr__

@@ -205,6 +205,8 @@ unsafe_pyconvertvalue(o, k, vo::AbstractPyRef) =
     tryconvtoconv(vo, unsafe_pyconvertvalue(o, k, vo))
 unsafe_pyconvertvalue(o, vo::AbstractPyRef) =
     tryconvtoconv(vo, unsafe_pytryconvertvalue(o, vo))
+unsafe_pyconvertarrayindices(axes, ko::AbstractPyRef) =
+    tryconvtoconv(ko, unsafe_pytryconvertarrayindices(axes, ko))
 
 @generated unsafe_pytryconvertkey(o, ko::AbstractPyRef) =
     try
@@ -221,10 +223,103 @@ unsafe_pytryconvertvalue(o, k, vo::AbstractPyRef) =
 
 @generated unsafe_pytryconvertvalue(o, vo::AbstractPyRef) =
     try
-        :(unsafe_pyconvert($(eltype(o)), vo))
+        :(unsafe_pytryconvert($(eltype(o)), vo))
     catch
-        :(unsafe_pyconvert(Any, vo))
+        :(unsafe_pytryconvert(Any, vo))
     end
+
+const PyArrayIndex = Union{Int, StepRange{Int,Int}}
+
+function unsafe_pytryconvertarrayindices(array::AbstractArray{T,N}, vo::AbstractPyRef) where {T,N}
+    R = VNE{NTuple{N, PyArrayIndex}}
+    if pyistuple(vo)
+        if unsafe_pytuple_size(vo) == N
+            rs = PyArrayIndex[]
+            for i in 1:N
+                r = unsafe_pytryconvertarrayindex(axes(array, i), _unsafe_pytuple_getitem(vo, i-1))
+                if r.iserr
+                    return R()
+                elseif r.isnothing
+                    return R(nothing)
+                else
+                    push!(rs, r.value)
+                end
+            end
+            return R(Some(NTuple{N,PyArrayIndex}(rs)))
+        else
+            pyerror_set_TypeError("expecting $N indices")
+        end
+    elseif N == 1
+        r = unsafe_pytryconvertarrayindex(axes(array, 1), vo)
+        if r.iserr
+            return R()
+        elseif r.isnothing
+            return R(nothing)
+        else
+            return R(Some((r.value,)))
+        end
+    else
+        pyerror_set_TypeError("expecting $N indices")
+    end
+    return R()
+end
+
+function unsafe_pytryconvertarrayindex(axis::AbstractUnitRange{<:Integer}, vo::AbstractPyRef)
+    R = VNE{PyArrayIndex}
+    # integer
+    ri = unsafe_pytryconvert(Int, vo)
+    if ri.iserr
+        return R()
+    elseif !ri.isnothing
+        if ri.value < 0
+            return R(Some(ri.value + 1 + last(axis)))
+        else
+            return R(Some(ri.value + first(axis)))
+        end
+    end
+    # slice
+    if pyisslice(vo)
+        # extract the fields
+        ao = _unsafe_pyslice_start(vo)
+        a = unsafe_pytryconvert(Union{Int,Nothing}, ao)
+        a.iserr && return R()
+        a.isnothing && return R(nothing)
+        ai = a.value
+        bo = _unsafe_pyslice_stop(vo)
+        b = unsafe_pytryconvert(Union{Int,Nothing}, bo)
+        b.iserr && return R()
+        b.isnothing && return R(nothing)
+        bi = b.value
+        co = _unsafe_pyslice_step(vo)
+        c = unsafe_pytryconvert(Union{Int,Nothing}, co)
+        c.iserr && return R()
+        c.isnothing && return R(nothing)
+        ci = c.value
+        # make a range
+        if ci === nothing
+            ci = 1
+        elseif iszero(ci)
+            pyerror_set_ValueError("slice step cannot be zero")
+            return R()
+        end
+        if ai === nothing
+            ai = ci > 0 ? first(axis) : last(axis)
+        elseif ai < 0
+            ai = ai + 1 + last(axis)
+        else
+            ai = ai + first(axis)
+        end
+        if bi === nothing
+            bi = ci > 0 ? last(axis) : fist(axis)
+        elseif bi < 0
+            bi = bi + 1 + last(axis) - sign(ci)
+        else
+            bi = bi + first(axis) - sign(ci)
+        end
+        return R(Some(ai:ci:bi))
+    end
+    return R(nothing)
+end
 
 ### BASE
 
@@ -249,18 +344,19 @@ end
 Base.getproperty(o::PyObject, a::Symbol) =
     _getproperty(o, Val(a))
 
-_getproperty(o, ::Val{a}) where {a} =
+_getproperty(o::PyObject, ::Val{a}) where {a} =
     pygetattr(o, a)
 
-_getproperty(o, ::Val{Symbol("jl!b")}) = pytruth(o)
-_getproperty(o, ::Val{Symbol("jl!s")}) = pystr(String, o)
-_getproperty(o, ::Val{Symbol("jl!r")}) = pyrepr(String, o)
-_getproperty(o, ::Val{Symbol("jl!i")}) = pyint_convert(Int, pyint(o))
-_getproperty(o, ::Val{Symbol("jl!u")}) = pyint_convert(UInt, pyint(o))
-_getproperty(o, ::Val{Symbol("jl!f")}) = pyfloat_convert(Float64, pyfloat(o))
-_getproperty(o, ::Val{Symbol("jl!list")}) = (args...)->PyList(o, args...)
-_getproperty(o, ::Val{Symbol("jl!dict")}) = (args...)->PyDict(o, args...)
-_getproperty(o, ::Val{Symbol("jl!array")}) = (args...)->PyArray(o, args...)
+_getproperty(o::PyObject, ::Val{Symbol("jl!b")}) = pytruth(o)
+_getproperty(o::PyObject, ::Val{Symbol("jl!s")}) = pystr(String, o)
+_getproperty(o::PyObject, ::Val{Symbol("jl!r")}) = pyrepr(String, o)
+_getproperty(o::PyObject, ::Val{Symbol("jl!i")}) = pyint_convert(Int, o)
+_getproperty(o::PyObject, ::Val{Symbol("jl!u")}) = pyint_convert(UInt, o)
+_getproperty(o::PyObject, ::Val{Symbol("jl!f")}) = pyfloat_convert(Float64, o)
+_getproperty(o::PyObject, ::Val{Symbol("jl!list")}) = (args...)->PyList{args...}(o)
+_getproperty(o::PyObject, ::Val{Symbol("jl!dict")}) = (args...)->PyDict{args...}(o)
+_getproperty(o::PyObject, ::Val{Symbol("jl!array")}) = (args...; opts...)->PyArray{args...}(o; opts...)
+_getproperty(o::PyObject, ::Val{Symbol("jl!buffer")}) = (args...)->PyBuffer(o, args...)
 
 Base.setproperty!(o::PyObject, a::Symbol, v) =
     pysetattr(o, a, v)
@@ -282,7 +378,8 @@ function Base.propertynames(o::PyObject)
         words.add("__class__")
         words.update(classmembers(o.__class__))
     end
-    [Symbol(pystr(String, x)) for x in words]
+    r = [Symbol(pystr(String, x)) for x in words]
+    return r
 end
 
 Base.:(==)(o1::PyObject, o2::PyObject) = pyeq(o1, o2)
@@ -300,9 +397,11 @@ Base.lastindex(o::PyObject) = length(o)-1
 
 Base.IteratorSize(::Type{<:PyObject}) = Base.SizeUnknown()
 
-Base.eltype(o::PyObject) = PyObject
-Base.keytype(o::PyObject) = PyObject
-Base.valtype(o::PyObject) = PyObject
+Base.eltype(::Type{PyObject}) = PyObject
+Base.keytype(::Type{PyObject}) = PyObject
+Base.valtype(::Type{PyObject}) = PyObject
+
+Base.in(x, o::PyObject) = pycontains(o, x)
 
 function Base.iterate(o::PyObject, s=nothing)
     s = s===nothing ? pyiter(o) : s

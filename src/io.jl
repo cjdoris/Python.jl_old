@@ -3,6 +3,8 @@ unsafe_pyrawio(io::IO) = unsafe_pyjulia(AsPyRawIO(io))
     pyrawio(io::IO)
 
 Wrap `io` into a Python raw bytes IO object.
+
+See also [`pybufferedio`](@ref).
 """
 pyrawio(io) = safe(unsafe_pyrawio(io))
 export pyrawio
@@ -12,6 +14,8 @@ unsafe_pybufferedio(io::IO) = unsafe_pyjulia(AsPyBufferedIO(io))
     pybufferedio(io::IO)
 
 Wrap `io` into a Python buffered bytes IO object.
+
+This is the default conversion to Python for `IO` objects. If you want text IO, use [`pytextio`](@ref).
 """
 pybufferedio(io) = safe(unsafe_pybufferedio(io))
 export pybufferedio
