@@ -11,3 +11,10 @@ end
 pylist_fromiter(xs) =
     safe(unsafe_pylist_fromiter(xs))
 export pylist_fromiter
+
+function unsafe_pylist_tryconvert(::Type{T}, o::AbstractPyRef) where {T}
+    R = VNE{T}
+    # fall back to iterator conversion
+    it = unsafe_pyiter(o)
+    isnull(it) ? R() : convert(R, unsafe_pyiter_tryconvert(T, it))
+end

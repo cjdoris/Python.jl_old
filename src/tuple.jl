@@ -11,3 +11,6 @@ export pytuple_fromiter
 
 _unsafe_pytuple_getitem(o::AbstractPyRef, i::Integer) =
     PyBorrowedRef(ccall((:PyTuple_GetItem, PYLIB), PyPtr, (PyPtr, CPy_ssize_t), o, i))
+
+unsafe_pytuple_tryconvert(::Type{T}, o::AbstractPyRef) where {T} =
+    unsafe_pyabstractiterable_tryconvert(T, o)

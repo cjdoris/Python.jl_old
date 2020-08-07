@@ -23,15 +23,36 @@ Base.convert(::Type{ValueOrError{T}}, x::ValueOrError{T}) where {T} = x
 Base.convert(::Type{ValueOrError{T}}, x::ValueOrError) where {T} =
     x.iserr ? ValueOrError{T}() : ValueOrError{T}(x.value)
 
-macro safeor(o, err)
+"""
+    @safe unsafe_expr [on_error]
+
+Evaluate `x=unsafe_expr`. If `iserr(x)` then do `on_error` (which defaults to `@goto error`), otherwise evaluate `value(x)`.
+"""
+macro safe(o, err=:(@goto error))
     :(let o=$(esc(o)); iserr(o) ? $(esc(err)) : value(o); end)
 end
 
-macro safe(o)
-    :(@safeor $(esc(o)) $(esc(:(@goto error))))
+"""
+    safe(o)
+
+If `iserr(o)` then `pythrow()`, else return `value(o)`.
+"""
+safe(o) = @safe o pythrow()
+
+"""
+    @su f(...) [on_error]
+
+Equivalent to `@safe unsafe_f(...) on_error`. That is, it prefixes `unsafe_` to the function call.
+"""
+macro su(o, err=:(@goto error))
+    if o isa Expr && o.head == :call
+        u = Expr(:call, Symbol(:unsafe_, o.args[1]), o.args[2:end]...)
+    else
+        error("@su expects a function call")
+    end
+    return :(@safe $(esc(u)) $(esc(err)))
 end
 
-safe(o) = @safeor o pythrow()
 
 
 struct ValueOrNothing{T}
@@ -176,4 +197,68 @@ end
 
 struct PascalString{N}
     bytes :: NTuple{N,UInt8}
+end
+
+@generated function unwrap_unionall(::Type{T}) where T
+    # unwrap type variables
+    vars = []
+    S = T
+    while S isa UnionAll
+        push!(vars, S.var)
+        S = S.body
+    end
+    return S, Tuple(reverse(vars))
+end
+
+@generated function extract_union(::Type{T}) where T
+    S, vars = unwrap_unionall(T)
+    if S isa Union
+        A = S.a
+        B = S.b
+        for v in vars
+            A = UnionAll(v, A)
+            B = UnionAll(v, B)
+        end
+        return Union{A, B}
+    end
+    return T
+end
+
+@generated function extract_pairtype(::Type{T}) where T
+    S, vars = unwrap_unionall(T)
+    A, B = S.parameters
+    for v in vars
+        A = UnionAll(v, A)
+        B = UnionAll(v, B)
+    end
+    return Pair{A,B}
+end
+
+@generated function extract_tupletype(::Type{T}) where T
+    S, vars = unwrap_unionall(T)
+    params = S.parameters
+    for v in vars
+        params = [UnionAll(v, p) for p in params]
+    end
+    return Tuple{params...}
+end
+
+@generated function extract_unitrangetype(::Type{T}) where T
+    S, vars = unwrap_unionall(T)
+    A = S.parameters[1]
+    for v in vars
+        A = UnionAll(v, A)
+    end
+    return UnitRange{A}
+end
+
+@generated function extract_steprangetype(::Type{T}) where T
+    S, vars = unwrap_unionall(T)
+    A = S.parameters[1]
+    B = S.parameters[2]
+    for v in vars
+        A = UnionAll(v, A)
+        B = UnionAll(v, B)
+    end
+    return StepRange{A, B}
 end

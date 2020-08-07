@@ -17,6 +17,9 @@ open(GEN_JL, "w") do io
         if haskey(data, "typechecker")
             get!(Dict, alldata, data["typechecker"])["typechecks"] = name
         end
+        if haskey(data, "instancechecker")
+            get!(Dict, alldata, data["instancechecker"])["instancechecks"] = name
+        end
         if haskey(data, "errsetter")
             get!(Dict, alldata, data["errsetter"])["errsets"] = name
         end
@@ -207,6 +210,12 @@ open(GEN_JL, "w") do io
         checks = get(data, "typechecks_fast", nothing)
         if checks !== nothing
             println(io, "$name(o) = unsafe_pytype_check_fast(o, $checks)")
+        end
+
+        # instance check
+        checks = get(data, "instancechecks", nothing)
+        if checks !== nothing
+            println(io, "$uname(o) = unsafe_pyisinstance(o, $checks())")
         end
 
         # error check

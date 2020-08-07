@@ -691,80 +691,105 @@ cfunc = "PyNumber_Index O O"
 
 ### NUMERIC ABC
 
-[pynumberabc]
+[pyabstractnumbertype]
 cachedobj = {expr="""unsafe_pyimportattr("numbers", "Number")"""}
+instancechecker = "pyisabstractnumber"
 
-[pycomplexabc]
+[pyabstractcomplextype]
 cachedobj = {expr="""unsafe_pyimportattr("numbers", "Complex")"""}
+instancechecker = "pyisabstractcomplex"
 
-[pyrealabc]
+[pyabstractrealtype]
 cachedobj = {expr="""unsafe_pyimportattr("numbers", "Real")"""}
+instancechecker = "pyisabstractreal"
 
-[pyrationalabc]
+[pyabstractrationaltype]
 cachedobj = {expr="""unsafe_pyimportattr("numbers", "Rational")"""}
+instancechecker = "pyisabstractrational"
 
-[pyintegralabc]
+[pyabstractintegraltype]
 cachedobj = {expr="""unsafe_pyimportattr("numbers", "Integral")"""}
+instancechecker = "pyisabstractintegral"
 
 ### COLLECTIONS ABC
 
-[pycontainerabc]
+[pyabstractiterabletype]
+cachedobj = {expr="""unsafe_pyimportattr("collections.abc", "Iterable")"""}
+instancechecker = "pyisabstractiterable"
+
+[pyabstractcontainertype]
 cachedobj = {expr="""unsafe_pyimportattr("collections.abc", "Container")"""}
+instancechecker = "pyisabstractcontainer"
 
-[pysequenceabc]
+[pyabstractsequencetype]
 cachedobj = {expr="""unsafe_pyimportattr("collections.abc", "Sequence")"""}
+instancechecker = "pyisabstractsequence"
 
-[pymappingabc]
+[pyabstractmappingtype]
 cachedobj = {expr="""unsafe_pyimportattr("collections.abc", "Mapping")"""}
+instancechecker = "pyisabstractmapping"
 
-[pysetabc]
+[pyabstractsettype]
 cachedobj = {expr="""unsafe_pyimportattr("collections.abc", "Set")"""}
+instancechecker = "pyisabstractset"
 
 ### IO
 
-[pyiobasetype]
+[pyabstractiotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "IOBase")"""}
+instancechecker = "pyisabstractio"
 
-[pyrawiobasetype]
+[pyabstractrawiotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "RawIOBase")"""}
+instancechecker = "pyisabstractrawio"
 
-[pybufferediobasetype]
+[pyabstractbufferediotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "BufferedIOBase")"""}
+instancechecker = "pyisabstractbufferedio"
 
-[pytextiobasetype]
+[pyabstracttextiotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "TextIOBase")"""}
+instancechecker = "pyisabstracttextio"
 
 [pyfileiotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "FileIO")"""}
 caller = "pyfileio"
+typechecker = "pyisfileio"
 
 [pybytesiotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "BytesIO")"""}
 caller = "pybytesio"
+typechecker = "pyisbytesio"
 
 [pybufferedreaderiotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "BufferedReader")"""}
 caller = "pybufferedreaderio"
+typechecker = "pyisbufferedreaderio"
 
 [pybufferedwriteriotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "BufferedWriter")"""}
 caller = "pybufferedwriterio"
+typechecker = "pyisbufferedwriterio"
 
 [pybufferedrandomiotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "BufferedRandom")"""}
 caller = "pybufferedrandomio"
+typechecker = "pyisbufferedrandomio"
 
 [pybufferedrwiotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "BufferedRW")"""}
 caller = "pybufferedrwio"
+typechecker = "pyisbufferedrwio"
 
 [pytextiowrappertype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "TextIOWrapper")"""}
 caller = "pytextiowrapper"
+typechecker = "pyistextiowrapper"
 
 [pystringiotype]
 cachedobj = {expr="""unsafe_pyimportattr("io", "StringIO")"""}
 caller = "pystringio"
+typechecker = "pyisstringio"
 
 ### SEQUENCE
 

@@ -183,7 +183,10 @@ end
 pyjulia(args...; kwargs...) = safe(unsafe_pyjulia(args...; kwargs...))
 export pyjulia
 
-unsafe_pyisjulia(o) = unsafe_pytype_check(o, pyjuliatype(Any))
+pyisjulia(o) = unsafe_pytype_check(o, pyjuliatype(Any))
+
+unsafe_pyjulia_tryconvert(::Type{T}, o::AbstractPyRef) where {T} =
+    tryconvert(T, unsafe_pyjulia_getvalue(o))
 
 _unsafe_pyjulia_getvalue(o::Union{Ref{CPyJuliaObject{T}}, AbstractPyRef{CPyJuliaObject{T}}}) where {T} =
     Base.unsafe_pointer_to_objref(uptr(o).value[Ptr]) :: pyjulia_unwrappedtype(T)
@@ -196,7 +199,7 @@ function unsafe_pyjulia_getvalue(o)
         o = unsafe_pyobj(o)
         isnull(o) && return R()
     end
-    if !unsafe_pyisjulia(o)
+    if !pyisjulia(o)
         pyerror_set_TypeError("expecting a julia type")
         return R()
     end

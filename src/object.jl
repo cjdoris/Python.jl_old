@@ -71,44 +71,55 @@ export pycall
 
 ### CONVERSION
 
-unsafe_pyconvert_rule(T, name, o) = VNE{T}(nothing)
+unsafe_pyconvert_rule_std(::Type{T}, name::Val, o) where {T} =
+    convert(VNE{T}, unsafe_pyconvert_rule(T, name, o))::VNE{T}
 
-unsafe_pyconvert_rule(::Type{T}, ::Val{:NoneType}, o) where {T<:Nothing} =
-    VNE{Nothing}(Some(nothing))
-unsafe_pyconvert_rule(::Type{T}, ::Val{:NoneType}, o) where {T>:Nothing} =
-    VNE{Nothing}(Some(nothing))
+unsafe_pyconvert_rule(::Type{T}, name, o) where {T} = VNE{T}(nothing)
 
-unsafe_pyconvert_rule(::Type{T}, ::Val{:int}, o) where {T<:Number} =
-    unsafe_pyint_tryconvert(T, o)
-unsafe_pyconvert_rule(::Type{T}, ::Val{:int}, o) where {T>:Number} =
-    unsafe_pyint_tryconvert(Number, o)
+unsafe_pyconvert_rule(::Type{T}, ::Val{:NoneType}, o) where {T} =
+    unsafe_pynone_tryconvert(T, o)
 
-unsafe_pyconvert_rule(::Type{T}, ::Val{:float}, o) where {T<:Number} =
-    unsafe_pyfloat_tryconvert(T, o)
-unsafe_pyconvert_rule(::Type{T}, ::Val{:float}, o) where {T>:Number} =
-    unsafe_pyfloat_tryconvert(Number, o)
-
-unsafe_pyconvert_rule(::Type{T}, ::Val{:str}, o) where {T<:AbstractString} =
+unsafe_pyconvert_rule(::Type{T}, ::Val{:str}, o) where {T} =
     unsafe_pystr_tryconvert(T, o)
-unsafe_pyconvert_rule(::Type{T}, ::Val{:str}, o) where {T>:AbstractString} =
-    unsafe_pystr_tryconvert(AbstractString, o)
-unsafe_pyconvert_rule(::Type{Symbol}, ::Val{:str}, o) =
-    unsafe_pystr_tryconvert(Symbol, o)
 
-function unsafe_pyconvert_rule(::Type{T}, ::Val{Symbol("julia.Any")}, o) where {T}
-    x = unsafe_pyjulia_getvalue(o)
-    iserr(x) && return VNE{T}()
-    try
-        y = convert(T, value(x))
-        return VNE{T}(Some(y))
-    catch err
-        if err isa MethodError && err.f === convert && err.args === (T, value(x))
-            return VNE{T}(nothing)
-        else
-            rethrow()
-        end
-    end
-end
+unsafe_pyconvert_rule(::Type{T}, ::Val{:bytes}, o) where {T} =
+    unsafe_pybytes_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:bool}, o) where {T} =
+    unsafe_pybool_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:int}, o) where {T} =
+    unsafe_pyint_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:tuple}, o) where {T} =
+    unsafe_pytuple_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:list}, o) where {T} =
+    unsafe_pylist_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:dict}, o) where {T} =
+    unsafe_pydict_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:float}, o) where {T} =
+    unsafe_pyfloat_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:complex}, o) where {T} =
+    unsafe_pycomplex_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:bytearray}, o) where {T} =
+    unsafe_pybytearray_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:set}, o) where {T} =
+    unsafe_pyset_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:frozenset}, o) where {T} =
+    unsafe_pyfrozenset_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{:range}, o) where {T} =
+    unsafe_pyrange_tryconvert(T, o)
+
+unsafe_pyconvert_rule(::Type{T}, ::Val{Symbol("julia.Any")}, o) where {T} =
+    unsafe_pyjulia_tryconvert(T, o)
 
 function unsafe_pytryconvert_union(::Type{A}, ::Type{B}, o::AbstractPyRef) where {A,B}
     R = VNE{Union{A,B}}
@@ -136,50 +147,113 @@ function unsafe_pytryconvert(::Type{T}, o::AbstractPyRef) where {T}
     R = VNE{T}
     _R = VNE{<:T}
     r::R = R()
+    TRACE = false
 
-    # FAST SPECIAL CASES
-    # TODO: UnionAll
-    # TODO: Fast checks for int, list, etc
+    # Deal with unions and the bottom type specially
+    TRACE && @info "special cases"
     if T === Union{}
         # nothing converts to the bottom type
         return R(nothing)
-    elseif T isa Union
+    elseif (U = extract_union(T)) isa Union
         # deal with each piece of a union separately
-        return unsafe_pytryconvert_union(T.a, T.b, o)::R
-    elseif T <: AbstractPyObject
-        # if we ask for a PyObject, just return o
-        return R(Some(T(o)))
+        TRACE && @info "union"
+        return unsafe_pytryconvert_union(U.a, U.b, o)::R
+    end
+    @assert unwrap_unionall(T)[1] isa DataType
+
+    # Specific type
+    TRACE && @info "specific types"
+    if T <: AbstractPyRef
+        T2 = typeintersect(T, AbstractPyObject)
+        if T2 === Union{}
+            r = R(nothing)
+        else
+            r = R(Some(T2(o)))
+        end
+        return r
+
+    # these python types have very fast type checks using specific flags on the type
+    elseif T <: Nothing && pyisnone(o)
+        r = R(Some(nothing))
+        return r
+    elseif T <: Union{AbstractString, Symbol} && pyisstr(o)
+        r = unsafe_pystr_tryconvert(T, o)::_R
+        return r
+    elseif T <: AbstractVector{UInt8} && pyisbytes(o)
+        r = unsafe_pybytes_tryconvert(T, o)::_R
+        return r
+    elseif T <: Bool && pyisbool(o)
+        r = R(Some(pyis(o, pytrue())))
+        return r
+    elseif T <: Integer && pyisint(o)
+        r = unsafe_pyint_tryconvert(T, o)::_R
+        return r
+    elseif T <: Union{Tuple, Pair} && pyistuple(o)
+        r = unsafe_pytuple_tryconvert(T, o)::_R
+        return r
+    elseif T <: AbstractVector && pyislist(o)
+        r = unsafe_pylist_tryconvert(T, o)::_R
+        return r
+    elseif T <: AbstractDict && pyisdict(o)
+        r = unsafe_pydict_tryconvert(T, o)::_R
+        return r
+
+    # more standard types, with normal type checking
+    elseif T <: AbstractFloat && pyisfloat(o)
+        r = unsafe_pyfloat_tryconvert(T, o)::_R
+        return r
+    elseif T <: Complex && pyiscomplex(o)
+        r = unsafe_pycomplex_tryconvert(T, o)::_R
+        return r
+    elseif T <: AbstractVector{UInt8} && pyisbytearray(o)
+        r = unsafe_pybytearray_tryconvert(T, o)::_R
+        return r
+    elseif T <: AbstractSet && (pyisset(o) || pyisfrozenset(o))
+        r = unsafe_pyset_tryconvert(T, o)::_R
+        return r
+    elseif T <: AbstractRange{<:Integer} && pyisrange(o)
+        r = unsafe_pyrange_tryconvert(T, o)::_R
+        return r
     end
 
-    # TRAVERSE THE MRO
+    # Traverse the MRO and check conversion rules
+    TRACE && @info "mro checks"
     mro = _unsafe_pytype_getmro(_unsafe_pytype(o))
     len = ccall((:PyTuple_Size, PYLIB), CPy_ssize_t, (PyPtr,), mro)
     for i in 1:len
         base = PyBorrowedRef(ccall((:PyTuple_GetItem, PYLIB), PyPtr, (PyPtr, CPy_ssize_t), mro, i-1))
         name = Symbol(_unsafe_pytype_getname(base))
-        r = unsafe_pyconvert_rule(T, Val(name), o) :: _R
-        (r.iserr || !r.isnothing) && return r
+        r = unsafe_pyconvert_rule_std(T, Val(name), o)::R
+        r.isnothing || return r
     end
 
-    # MORE SPECIAL CASES
-    # TODO: is it possible to detect which abstract base classes a type is registered with?
-    if (typeintersect(T, AbstractVector) !== Union{}) && @safe unsafe_pyisinstance(o, @safe unsafe_pysequenceabc())
-        r = unsafe_pyconvert_rule(T, Val(Symbol("collections.abc.Sequence")), o) :: _R
-        (r.iserr || !r.isnothing) && return r
+    # ABC checks
+    TRACE && @info "ABC checks"
+    if _unsafe_pyisbuffer(o) || @safe unsafe_pyhasattr(o, "__array_interface__")
+        x = PyArray(o) # TODO: this can throw
+        y = tryconvert(T, x) # TODO: does this copy? should it?
+        y.isnothing || return convert(R, y)
     end
-    if (typeintersect(T, AbstractDict) !== Union{}) && @safe unsafe_pyisinstance(o, @safe unsafe_pymappingabc())
-        r = unsafe_pyconvert_rule(T, Val(Symbol("collections.abc.Mapping")), o) :: _R
-        (r.iserr || !r.isnothing) && return r
+    if @safe unsafe_pyisabstractiterable(o)
+        r = unsafe_pyabstractiterable_tryconvert(T, o)
+        r.isnothing || return r
     end
-    if (typeintersect(T, AbstractSet) !== Union{}) && @safe unsafe_pyisinstance(o, @safe unsafe_pysetabc())
-        r = unsafe_pyconvert_rule(T, Val(Symbol("collections.abc.Set")), o) :: _R
-        (r.iserr || !r.isnothing) && return r
+    if @safe unsafe_pyisabstractnumber(o)
+        r = unsafe_pyabstractnumber_tryconvert(T, o)
+        r.isnothing || return r
     end
-    if T === Any
-        return R(Some(o))
+    if @safe unsafe_pyisabstractio(o)
+        r = unsafe_pyabstractio_tryconvert(T, o)
+        r.isnothing || return r
     end
 
-    # NOTHING WORKED
+    # As a last resort, return the original value as an AbstractPyObject if possible
+    TRACE && @info "last resort"
+    if (T2 = typeintersect(T, AbstractPyObject)) !== Union{}
+        return R(Some(T2(o)))
+    end
+
+    # Nothing worked
     return R(nothing)
 
     @label error
@@ -188,7 +262,7 @@ end
 
 tryconvtoconv(o::AbstractPyRef, r::VNE{T}) where {T} =
     nothingtoerror(r) do
-        pyerror_set_TypeError("cannot convert $(_unsafe_pytype_getname(_unsafe_pytype(o))) to julia.$T")
+        pyerror_set_TypeError("cannot convert this `$(_unsafe_pytype_getname(_unsafe_pytype(o)))` to `julia.$T`")
     end
 
 unsafe_pyconvert(::Type{T}, o::AbstractPyRef) where {T} =
@@ -198,6 +272,34 @@ pytryconvert(::Type{T}, o::AbstractPyRef) where {T} =
 pyconvert(::Type{T}, o::AbstractPyRef) where {T} =
     safe(unsafe_pyconvert(T, o))
 export pytryconvert, pyconvert
+
+@generated function unsafe_pytryconvertfirst(args...)
+    if length(args) ≥ 1 && args[end] <: AbstractPyRef && all(a -> a <: Type, args[1:end-1])
+        Ts = map(a -> a.parameters[1], args[1:end-1])
+        R = VNE{Union{Ts...}}
+        code = []
+        push!(code, :(R = $R))
+        for T in Ts
+            r = gensym()
+            push!(code, quote
+                $r = unsafe_pytryconvert($T, args[end])
+                $r.isnothing || return convert(R, $r)
+            end)
+        end
+        push!(code, :(return R(nothing)))
+        Expr(:block, code...)
+    else
+        :(throw(MethodError(unsafe_pytryconvert_first, args)))
+    end
+end
+
+unsafe_pyconvertfirst(args...) =
+    tryconvtoconv(args[end], unsafe_pytryconvertfirst(args...))
+pytryconvertfirst(args...) =
+    safe(unsafe_pytryconvertfirst(args...))
+pyconvertfirst(args...) =
+    safe(unsafe_pyconvertfirst(args...))
+export pytryconvertfirst, pyconvertfirst
 
 unsafe_pyconvertkey(o, ko::AbstractPyRef) =
     tryconvtoconv(ko, unsafe_pytryconvertkey(o, ko))

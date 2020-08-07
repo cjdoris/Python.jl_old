@@ -24,3 +24,6 @@ end
 pyfrozenset_fromiter(xs) =
     safe(unsafe_pyfrozenset_fromiter(xs))
 export pyfrozenset_fromiter
+
+unsafe_pyset_tryconvert(::Type{T}, o::AbstractPyRef) where {T} =
+    unsafe_pyabstractset_tryconvert(T, o)

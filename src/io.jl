@@ -34,3 +34,8 @@ The keyword options are as for `io.TextIOWrapper`. The encoding defaults to "utf
 """
 pytextio(args...; kwargs...) = safe(unsafe_pytextio(args...; kwargs...))
 export pytextio
+
+
+function unsafe_pyabstractio_tryconvert(::Type{T}, o::AbstractPyRef, subs::Bool=true) where {T}
+    return VNE{T}(nothing)
+end

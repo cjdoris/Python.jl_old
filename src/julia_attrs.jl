@@ -1673,7 +1673,7 @@ pyjulia_attrdef(::Val{:__concat__}, ::Type{T}) where {T<:AbstractVector} =
 const _pyjulia_implmethod___concat___1_1 = function (o, vs)
 
     # if vs is a julia wrapped array, use julia concatenation
-    if unsafe_pyisjulia(vs)
+    if pyisjulia(vs)
         jvs = _unsafe_pyjulia_getvalue(vs)
         if jvs isa AbstractVector
             return unsafe_pyjulia([o; jvs])

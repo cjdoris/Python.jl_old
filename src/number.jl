@@ -1,6 +1,14 @@
 unsafe_pypow(x1, x2) = unsafe_pypow(x1, x2, pynone())
 unsafe_pyipow(x1, x2) = unsafe_pyipow(x1, x2, pynone())
 
+# CONVERSION
+
+function unsafe_pyabstractnumber_tryconvert(::Type{T}, o::AbstractPyRef, subs::Bool=true) where {T}
+    return VNE{T}(nothing)
+end
+
+# BASE
+
 Base.:+(x::PyObject, y::PyObject) = pyadd(x, y)
 Base.:-(x::PyObject, y::PyObject) = pysub(x, y)
 Base.:*(x::PyObject, y::PyObject) = pymul(x, y)

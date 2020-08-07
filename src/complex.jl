@@ -5,19 +5,22 @@ unsafe_pycomplex(x::CPy_complex) =
 unsafe_pycomplex(x::Complex) =
     unsafe_pycomplex(real(x), imag(x))
 
-function unsafe_pycomplex_convert(::Type{Complex{Cdouble}}, o::PyObject)
-    R = ValueOrError{Complex{Cdouble}}
+function unsafe_pycomplex_ascomplex(o::AbstractPyRef)
+    R = VE{Complex{Cdouble}}
     x = unsafe_pycomplex_realasdouble(o)
-    iserr(x) && return R()
+    x.iserr && return R()
     y = unsafe_pycomplex_imagasdouble(o)
-    iserr(y) && return R()
-    return R(Complex(value(x), value(y)))
+    y.iserr && return R()
+    return R(Complex(x.value, y.value))
 end
-function unsafe_pycomplex_convert(::Type{T}, o::PyObject) where {T<:Number}
-    R = ValueOrError{T}
-    x = unsafe_pycomplex_convert(Complex{Cdouble}, o)
-    iserr(x) ? R() : R(convert(T, value(x)))
+
+function unsafe_pycomplex_tryconvert(::Type{T}, o::AbstractPyRef) where {T}
+    r = unsafe_pycomplex_ascomplex(o)::VE{Complex{Cdouble}}
+    if T >: Complex{Cdouble}
+        return convert(VNE, r)
+    elseif T <: Complex{<:PyFloatLike}
+        return convert(VNE{T}, r)
+    else
+        return tryconvert(T, r)
+    end
 end
-pycomplex_convert(::Type{T}, o::PyObject) where {T} =
-    safe(unsafe_pycomplex_convert(T, o))
-export pycomplex_convert

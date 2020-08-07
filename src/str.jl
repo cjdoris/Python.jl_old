@@ -14,11 +14,20 @@ unsafe_pystr(o::Symbol) =
 function unsafe_pystr_tryconvert(::Type{T}, o::AbstractPyRef) where {T}
     r = unsafe_pystr_asjuliastring(o)::VE{String}
     if T >: String
-        return convert(VNE, r)
+        convert(VNE, r)
     elseif T >: Symbol
         r.iserr ? VNE{Symbol}() : VNE{Symbol}(Some(Symbol(r.value)))
+    elseif ((S = typeintersect(T, AbstractChar)) !== Union{})
+        if r.iserr
+            VNE{S}()
+        elseif length(r.value) == 1
+            convert(VNE{S}, tryconvert(S, first(r.value)))
+        else
+            pyerror_set_ValueError("only strings of length 1 can be converted to a character")
+            VNE{S}()
+        end
     else
-        return tryconvert(T, r)
+        tryconvert(T, r)
     end
 end
 

@@ -24,3 +24,6 @@ end
 pydict_fromstringpairs(kvs) =
     safe(unsafe_pydict_fromstringpairs(kvs))
 export pydict_fromstringpairs
+
+unsafe_pydict_tryconvert(::Type{T}, o::AbstractPyRef) where {T} =
+    unsafe_pyabstractmapping_tryconvert(T, o)
