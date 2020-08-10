@@ -52,6 +52,8 @@ const _pyjulia_Any_type = pynull()
 # It is the responsibility of the Python object to clear its entry when deallocated.
 const PYJLGCCACHE = Base.IdDict{PyPtr, Any}()
 
+const PYJLBUFCACHE = Base.IdDict{Ptr{CPy_buffer}, Any}()
+
 const _pyexc_JuliaException_type = pynull()
 unsafe_pyexc_JuliaException_type() =
     unsafe_cacheget!(_pyexc_JuliaException_type) do
@@ -112,6 +114,11 @@ function unsafe_pyjuliatype(::Type{T}) where {T}
             inplace_repeat = pyjulia_specialattr(Val(:__irepeat__), T),
         )
         all(a==:length || b==C_NULL for (a,b) in pairs(sq_opts)) && (sq_opts = C_NULL)
+        buf_opts = (
+            get = pyjulia_specialattr(Val(:__getbuffer__), T),
+            release = pyjulia_specialattr(Val(:__releasebuffer__), T),
+        )
+        (buf_opts.get == C_NULL) && (buf_opts = C_NULL)
         methods = pyjulia_methodattrs(T)
         isempty(methods) && (methods = C_NULL)
         getset = pyjulia_propertyattrs(T)
@@ -131,6 +138,7 @@ function unsafe_pyjuliatype(::Type{T}) where {T}
             as_number = nb_opts,
             as_mapping = mp_opts,
             as_sequence = sq_opts,
+            as_buffer = buf_opts,
             methods = methods,
             getset = getset,
         )
@@ -307,7 +315,7 @@ open(JL_ATTR_JL, "w") do io
                 "try";
                 ["    $line" for line in lines];
                 "catch err";
-                "    perr = unsafe_pyobj(err)";
+                "    perr = unsafe_pyjulia((err, catch_backtrace()))";
                 "    pyerror_set(pyexc_JuliaException_type(), perr)";
                 "    return $errval";
                 "end";
@@ -436,6 +444,10 @@ open(JL_ATTR_JL, "w") do io
                         # setattrfunc
                         elseif name in ("__setattr_str__",)
                             "Cint", ("Ptr{CPyJuliaObject{T}}", "Cstring", "PyPtr")
+                        elseif name in ("__getbuffer__",)
+                            "Cint", ("Ptr{CPyJuliaObject{T}}", "Ptr{CPy_buffer}", "Cint")
+                        elseif name in ("__releasebuffer__",)
+                            "Cvoid", ("Ptr{CPyJuliaObject{T}}", "Ptr{CPy_buffer}")
                         # hashfunc
                         elseif name in ("__hash__",)
                             "CPy_hash_t", ("Ptr{CPyJuliaObject{T}}",)
@@ -579,6 +591,57 @@ function numpy_typestr_descr(::Type{T}) where {T}
 
     @label err
     return PYNULL, PYNULL, 0
+end
+
+function unsafe_numpy_dtype(::Type{T}) where {T}
+    sz = Base.aligned_sizeof(T)
+    dtype = "V$(sz)"
+    if Base.allocatedinline(T)
+        if T === Float64
+            dtype = "float64"
+        elseif T === Float32
+            dtype = "float32"
+        elseif T === Float16
+            dtype = "float16"
+        elseif T === Int64
+            dtype = "int64"
+        elseif T === Int32
+            dtype = "int32"
+        elseif T === Int16
+            dtype = "int16"
+        elseif T === Int8
+            dtype = "int8"
+        elseif T === UInt64
+            dtype = "uint64"
+        elseif T === UInt32
+            dtype = "uint32"
+        elseif T === UInt16
+            dtype = "uint16"
+        elseif T === UInt8
+            dtype = "uint8"
+        elseif T === Bool
+            dtype = "bool"
+        elseif T === Complex{Float64}
+            dtype = "complex128"
+        elseif T === Complex{Float32}
+            dtype = "complex64"
+        elseif Base.isstructtype(T)
+            names = pylist()
+            formats = pylist()
+            offsets = pylist()
+            for i in 1:fieldcount(T)
+                name = fieldname(T, i)
+                @su pylist_append(names, name isa Integer ? "f$name" : "$name")
+                @su pylist_append(formats, @su numpy_dtype(fieldtype(T, i)))
+                @su pylist_append(offsets, fieldoffset(T, i))
+            end
+            dict = @su pydict_fromstringpairs(pairs((names=names, formats=formats, offsets=offsets, itemsize=sz)))
+            dtype = @su pyimportattrcall("numpy", "dtype", dict, align=true)
+        end
+    end
+    return unsafe_pyobj(dtype)
+    @label error
+    return PYNULL
 end
 
 ### ABCs

@@ -33,7 +33,6 @@ end
         end
         ts = ts[1:end-1]
     end
-    @show V ts
 
     # generate code for the fixed types
     code = Expr[]
@@ -98,7 +97,6 @@ end
     end
 
     code = Expr(:block, code...)
-    @show code
     return code
 end
 

@@ -35,7 +35,7 @@ function pyjulia_implmethod_seek_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_seek_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -78,7 +78,7 @@ function pyjulia_implmethod_close_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_close_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -163,7 +163,7 @@ function pyjulia_implmethod_truncate_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_truncate_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -206,7 +206,7 @@ function pyjulia_implgetter_closed_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implgetter_closed_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -247,7 +247,7 @@ function pyjulia_implmethod_fileno_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_fileno_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -290,7 +290,7 @@ function pyjulia_implmethod_writable_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_writable_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -333,7 +333,7 @@ function pyjulia_implmethod_tell_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_tell_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -376,7 +376,7 @@ function pyjulia_implmethod_flush_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_flush_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -419,7 +419,7 @@ function pyjulia_implmethod_readable_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_readable_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -511,7 +511,7 @@ function pyjulia_implmethod___setitem___1_1(y1, y2, y3)
         r::Cint = pyjulia_retval(_pyjulia_implmethod___setitem___1_1(x1, x2, x3))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return (zero(Cint) - one(Cint))
     end
@@ -537,7 +537,7 @@ function pyjulia_implgetter_shape_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implgetter_shape_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -546,6 +546,125 @@ end
 pyjulia_attrdef(::Val{:shape}, ::Type{T}, ::Type{AbstractArray}, ::Val{1}) where {T<:AbstractArray} = (
     name = "shape",
     get = @cfunction(pyjulia_implgetter_shape_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, Ptr{Cvoid})),
+)
+
+
+### AbstractArray.ndim
+
+pyjulia_attrkind(::Val{:ndim}, ::Type{T}) where {T<:AbstractArray} =
+    :property
+
+pyjulia_attrdef(::Val{:ndim}, ::Type{T}) where {T<:AbstractArray} =
+    pyjulia_attrdef(Val(:ndim), T, AbstractArray, Val(1))
+
+const _pyjulia_implgetter_ndim_1_1 = o -> unsafe_pyint(ndims(o))
+function pyjulia_implgetter_ndim_1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implgetter_ndim_1_1(x1))
+        return r
+    catch err
+        perr = unsafe_pyjulia((err, catch_backtrace()))
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:ndim}, ::Type{T}, ::Type{AbstractArray}, ::Val{1}) where {T<:AbstractArray} = (
+    name = "ndim",
+    get = @cfunction(pyjulia_implgetter_ndim_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, Ptr{Cvoid})),
+)
+
+
+### AbstractArray.reshape
+
+pyjulia_attrkind(::Val{:reshape}, ::Type{T}) where {T<:AbstractArray} =
+    (hasmethod(reshape, Tuple{T, Vararg{Int}})) ? :method :
+    invoke(pyjulia_attrkind, Tuple{Val{:reshape}, Type{_T}} where {_T<:supertype(AbstractArray)}, Val(:reshape), T)
+
+pyjulia_attrdef(::Val{:reshape}, ::Type{T}) where {T<:AbstractArray} =
+    (hasmethod(reshape, Tuple{T, Vararg{Int}})) ? pyjulia_attrdef(Val(:reshape), T, AbstractArray, Val(1)) :
+    invoke(pyjulia_attrdef, Tuple{Val{:reshape}, Type{_T}} where {_T<:supertype(AbstractArray)}, Val(:reshape), T)
+
+const _pyjulia_implmethod_reshape_1_1 = function (o, _sz)
+    msz = unsafe_pytryconvertfirst(Tuple{Vararg{Int}}, Tuple{Tuple{Vararg{Int}}}, _sz)
+    if msz.iserr
+        return PYNULL
+    elseif msz.isnothing
+        pyerror_set_TypeError("new shape must be tuple of integers")
+        return PYNULL
+    else
+        sz = msz.value isa Tuple{Vararg{Int}} ? msz.value : msz.value[1]
+        if prod(sz) == length(o)
+            return unsafe_pyjulia(reshape(o, sz))
+        else
+            pyerror_set_ValueError("cannot reshape array of size $(length(o)) to shape $(sz)")
+            return PYNULL
+        end
+    end
+end
+function pyjulia_implmethod_reshape_1_1(y1, y2)
+    x1 = pyjulia_argval(y1)
+    x2 = pyjulia_argval(y2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod_reshape_1_1(x1, x2))
+        return r
+    catch err
+        perr = unsafe_pyjulia((err, catch_backtrace()))
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:reshape}, ::Type{T}, ::Type{AbstractArray}, ::Val{1}) where {T<:AbstractArray} = (
+    name = "reshape",
+    meth = @cfunction(pyjulia_implmethod_reshape_1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr)),
+    flags = 0x0000000000000001,
+    doc = "o.reshape(dims)\n\nA lazy view of `o` reshaped to have the given `dims`.\n\nSince Julia uses column-major indexing, this is equivalent to `numpy.reshape(o, dims, order=\"F\")`.\n",
+)
+
+
+### AbstractArray.__array__
+
+pyjulia_attrkind(::Val{:__array__}, ::Type{T}) where {T<:AbstractArray} =
+    :method
+
+pyjulia_attrdef(::Val{:__array__}, ::Type{T}) where {T<:AbstractArray} =
+    pyjulia_attrdef(Val(:__array__), T, AbstractArray, Val(1))
+
+const _pyjulia_implmethod___array___1_1 = function (__o)
+    _o = PyBorrowedRef(__o)
+    o = _unsafe_pyjulia_getvalue(_o)
+    # if not a buffer type, copy the data to an Array and try again
+    _unsafe_pyisbuffer(_o) || return unsafe_pycall(@su pygetattr((@su pyjulia(Array(o))), "__array__"))
+    T = eltype(o)
+    N = ndims(o)
+    isz = Base.aligned_sizeof(eltype(o))
+    sz = size(o)
+    @assert length(sz) == N
+    st = isz .* strides(o)
+    @assert length(st) == N
+    dtype = @su numpy_dtype(T)
+    return unsafe_pyimportattrcall("numpy", "ndarray", sz, buffer=_o, strides=st, dtype=dtype)
+    @label error
+    return PYNULL
+end
+function pyjulia_implmethod___array___1_1(x1, x2)
+    try
+        r::PyPtr = pyjulia_retval(_pyjulia_implmethod___array___1_1(x1))
+        return r
+    catch err
+        perr = unsafe_pyjulia((err, catch_backtrace()))
+        pyerror_set(pyexc_JuliaException_type(), perr)
+        return PyPtr(C_NULL)
+    end
+end
+
+pyjulia_attrdef(::Val{:__array__}, ::Type{T}, ::Type{AbstractArray}, ::Val{1}) where {T<:AbstractArray} = (
+    name = "__array__",
+    meth = @cfunction(pyjulia_implmethod___array___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, PyPtr)),
+    flags = 0x0000000000000004,
 )
 
 
@@ -574,7 +693,7 @@ function pyjulia_implmethod___getitem___1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___getitem___1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -599,7 +718,7 @@ function pyjulia_implmethod___float___1_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___float___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -627,7 +746,7 @@ function pyjulia_implmethod___floor___1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___floor___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -658,7 +777,7 @@ function pyjulia_implmethod___ceil___1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___ceil___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -698,7 +817,7 @@ function pyjulia_implmethod___round___1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___round___1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -728,7 +847,7 @@ function pyjulia_implmethod___int___1_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___int___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -756,7 +875,7 @@ function pyjulia_implmethod___trunc___1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___trunc___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -792,7 +911,7 @@ function pyjulia_implmethod_write_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_write_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -828,7 +947,7 @@ function pyjulia_implmethod_readinto_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_readinto_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -857,7 +976,7 @@ function pyjulia_implmethod_readall_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_readall_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -896,7 +1015,7 @@ function pyjulia_implmethod_read_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_read_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -936,7 +1055,7 @@ function pyjulia_implmethod___next___1_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___next___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -980,7 +1099,7 @@ function pyjulia_implmethod_items_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_items_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1008,7 +1127,7 @@ function pyjulia_implmethod___iter___2_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___iter___2_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1034,7 +1153,7 @@ function pyjulia_implmethod_keys_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_keys_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1063,7 +1182,7 @@ function pyjulia_implmethod_values_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_values_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1103,7 +1222,7 @@ function pyjulia_implmethod___contains___1_1(y1, y2)
         r::Cint = pyjulia_retval(_pyjulia_implmethod___contains___1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return (zero(Cint) - one(Cint))
     end
@@ -1140,7 +1259,7 @@ function pyjulia_implmethod_get_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_get_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1153,45 +1272,150 @@ pyjulia_attrdef(::Val{:get}, ::Type{T}, ::Type{AbstractDict}, ::Val{1}) where {T
 )
 
 
-### StridedArray.__array_interface__
+### StridedArray.__getbuffer__
 
-pyjulia_attrkind(::Val{:__array_interface__}, ::Type{T}) where {T<:StridedArray} =
-    :property
+pyjulia_attrkind(::Val{:__getbuffer__}, ::Type{T}) where {T<:StridedArray} =
+    :special
 
-pyjulia_attrdef(::Val{:__array_interface__}, ::Type{T}) where {T<:StridedArray} =
-    pyjulia_attrdef(Val(:__array_interface__), T, StridedArray, Val(1))
+pyjulia_attrdef(::Val{:__getbuffer__}, ::Type{T}) where {T<:StridedArray} =
+    pyjulia_attrdef(Val(:__getbuffer__), T, StridedArray, Val(1))
 
-const _pyjulia_implgetter___array_interface___1_1 = function (o)
-    d = Dict{String, PyObject}()
-    d["shape"] = @safe unsafe_pytuple_fromiter(size(o))
-    x, y, elsize = numpy_typestr_descr(eltype(o))
-    isnull(x) && @goto error
-    d["typestr"] = x
-    isnull(y) || (d["descr"] = y)
-    d["data"] = @safe unsafe_pytuple_fromiter((convert(Integer, Base.unsafe_convert(Ptr{eltype(o)}, o)), isimmutable(o)))
-    d["strides"] = @safe unsafe_pytuple_fromiter(elsize .* strides(o))
-    d["version"] = @safe unsafe_pyint(3)
-    return unsafe_pydict_fromstringpairs(d)
-    @label error
-    return PYNULL
+const _pyjulia_implmethod___getbuffer___1_1 = function (_o, _b, flags)
+    o = _unsafe_pyjulia_getvalue(_o)
+    b = uptr(_b)
+    cache = Any[o]
+    T = eltype(o)
+    N = ndims(o)
+    isz = Base.aligned_sizeof(T)
+
+    b.buf[] = pointer(o)
+
+    incref!(PyBorrowedRef(_o))
+    b.obj[] = _o
+
+    b.len[] = isz * length(o)
+
+    b.itemsize[] = isz
+
+    if iszero(flags & CPyBUF_WRITABLE)
+        b.readonly[] = isimmutable(o) ? 1 : 0
+    elseif isimmutable(o)
+        pyerror_set_BufferError("read only")
+        return -1
+    else
+        b.readonly[] = 0
+    end
+
+    b.ndim[] = N
+
+    if iszero(flags & CPyBUF_FORMAT)
+        b.format[] = C_NULL
+    else
+        if T === Cchar
+            fmt = "b"
+        elseif T === Cuchar
+            fmt = "B"
+        elseif T === Bool && sizeof(T) == 1
+            fmt = "?"
+        elseif T === Cshort
+            fmt = "h"
+        elseif T === Cushort
+            fmt = "H"
+        elseif T === Cint
+            fmt = "i"
+        elseif T === Cuint
+            fmt = "I"
+        elseif T === Clong
+            fmt = "l"
+        elseif T === Culong
+            fmt = "L"
+        elseif T === Clonglong
+            fmt = "q"
+        elseif T === Culonglong
+            fmt = "Q"
+        elseif T === Cssize_t
+            fmt = "n"
+        elseif T === Csize_t
+            fmt = "N"
+        elseif T === Float16
+            fmt = "e"
+        elseif T === Float32
+            fmt = "f"
+        elseif T === Float64
+            fmt = "d"
+        elseif T <: Ptr
+            fmt = "P"
+        else
+            pyerror_set_BufferError("format not implemented")
+            return -1
+        end
+        push!(cache, fmt)
+        b.format[] = pointer(fmt)
+    end
+
+    if iszero(flags & CPyBUF_ND)
+        b.shape[] = C_NULL
+    else
+        @assert length(size(o)) == N
+        sz = CPy_ssize_t[size(o)...]
+        push!(cache, sz)
+        b.shape[] = pointer(sz)
+    end
+
+    if iszero(flags & CPyBUF_STRIDES)
+        b.strides[] = C_NULL
+    else
+        @assert length(strides(o)) == N
+        st = CPy_ssize_t[(isz .* strides(o))...]
+        push!(cache, st)
+        b.strides[] = pointer(st)
+    end
+
+    b.suboffsets[] = C_NULL
+
+    # for a sanity check in __releasebuffer__
+    b.internal[] = _b
+
+    PYJLBUFCACHE[_b] = cache
+    return 0
 end
-function pyjulia_implgetter___array_interface___1_1(y1, y2)
-    x1 = pyjulia_argval(y1)
-    x2 = pyjulia_argval(y2)
+function pyjulia_implmethod___getbuffer___1_1(x1, x2, x3)
     try
-        r::PyPtr = pyjulia_retval(_pyjulia_implgetter___array_interface___1_1(x1))
+        r::Cint = pyjulia_retval(_pyjulia_implmethod___getbuffer___1_1(x1, x2, x3))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
-        return PyPtr(C_NULL)
+        return (zero(Cint) - one(Cint))
     end
 end
 
-pyjulia_attrdef(::Val{:__array_interface__}, ::Type{T}, ::Type{StridedArray}, ::Val{1}) where {T<:StridedArray} = (
-    name = "__array_interface__",
-    get = @cfunction(pyjulia_implgetter___array_interface___1_1, PyPtr, (Ptr{CPyJuliaObject{T}}, Ptr{Cvoid})),
-)
+pyjulia_attrdef(::Val{:__getbuffer__}, ::Type{T}, ::Type{StridedArray}, ::Val{1}) where {T<:StridedArray} =
+    @cfunction(pyjulia_implmethod___getbuffer___1_1, Cint, (Ptr{CPyJuliaObject{T}}, Ptr{CPy_buffer}, Cint))
+
+
+### StridedArray.__releasebuffer__
+
+pyjulia_attrkind(::Val{:__releasebuffer__}, ::Type{T}) where {T<:StridedArray} =
+    :special
+
+pyjulia_attrdef(::Val{:__releasebuffer__}, ::Type{T}) where {T<:StridedArray} =
+    pyjulia_attrdef(Val(:__releasebuffer__), T, StridedArray, Val(1))
+
+const _pyjulia_implmethod___releasebuffer___1_1 = function (_o, _b)
+    b = uptr(_b)
+    @assert b.internal[] == _b
+    delete!(PYJLBUFCACHE, _b)
+    return nothing
+end
+
+function pyjulia_implmethod___releasebuffer___1_1(x1, x2)
+    r::Cvoid = pyjulia_retval(_pyjulia_implmethod___releasebuffer___1_1(x1, x2))
+    return r
+end
+
+pyjulia_attrdef(::Val{:__releasebuffer__}, ::Type{T}, ::Type{StridedArray}, ::Val{1}) where {T<:StridedArray} =
+    @cfunction(pyjulia_implmethod___releasebuffer___1_1, Cvoid, (Ptr{CPyJuliaObject{T}}, Ptr{CPy_buffer}))
 
 
 ### AbstractVector.reverse
@@ -1212,7 +1436,7 @@ function pyjulia_implmethod_reverse_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_reverse_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1257,7 +1481,7 @@ function pyjulia_implmethod_pop_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_pop_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1298,7 +1522,7 @@ function pyjulia_implmethod_remove_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_remove_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1343,7 +1567,7 @@ function pyjulia_implmethod_extend_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_extend_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1383,7 +1607,7 @@ function pyjulia_implmethod___irepeat___1_1(x1, x2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___irepeat___1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1419,7 +1643,7 @@ function pyjulia_implmethod_count_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_count_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1449,7 +1673,7 @@ function pyjulia_implmethod___repeat___1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___repeat___1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1491,7 +1715,7 @@ function pyjulia_implmethod___iconcat___1_1(x1, x2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___iconcat___1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1517,7 +1741,7 @@ function pyjulia_implmethod___getitem_int___1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___getitem_int___1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1552,7 +1776,7 @@ function pyjulia_implmethod_index_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_index_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1583,7 +1807,7 @@ function pyjulia_implmethod___reversed___1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___reversed___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1618,7 +1842,7 @@ function pyjulia_implmethod_append_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_append_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1649,7 +1873,7 @@ function pyjulia_implmethod_sort_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_sort_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1707,7 +1931,7 @@ function pyjulia_implmethod___concat___1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___concat___1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1733,7 +1957,7 @@ function pyjulia_implgetter_real_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implgetter_real_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1761,7 +1985,7 @@ function pyjulia_implmethod_conjugate_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_conjugate_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1790,7 +2014,7 @@ function pyjulia_implgetter_imag_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implgetter_imag_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1828,7 +2052,7 @@ function pyjulia_implmethod___setitem___2_1(y1, y2, y3)
         r::Cint = pyjulia_retval(_pyjulia_implmethod___setitem___2_1(x1, x2, x3))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return (zero(Cint) - one(Cint))
     end
@@ -1855,7 +2079,7 @@ function pyjulia_implmethod___iter___3_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___iter___3_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1894,7 +2118,7 @@ function pyjulia_implmethod___contains___2_1(y1, y2)
         r::Cint = pyjulia_retval(_pyjulia_implmethod___contains___2_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return (zero(Cint) - one(Cint))
     end
@@ -1949,7 +2173,7 @@ function pyjulia_implmethod___getitem___2_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___getitem___2_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -1991,7 +2215,7 @@ function pyjulia_implmethod___getattr___1_1(x1, x2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___getattr___1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2029,7 +2253,7 @@ function pyjulia_implmethod___dir___1_1(x1, x2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___dir___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2057,7 +2281,7 @@ function pyjulia_implmethod___str___1_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___str___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2082,7 +2306,7 @@ function pyjulia_implmethod___repr___1_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___repr___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2109,7 +2333,7 @@ function pyjulia_implmethod___len___1_1(y1)
         r::CPy_ssize_t = pyjulia_retval(_pyjulia_implmethod___len___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return (zero(CPy_ssize_t) - one(CPy_ssize_t))
     end
@@ -2134,7 +2358,7 @@ function pyjulia_implmethod___hash___1_1(y1)
         r::CPy_hash_t = pyjulia_retval(_pyjulia_implmethod___hash___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return (zero(CPy_hash_t) - one(CPy_hash_t))
     end
@@ -2159,7 +2383,7 @@ function pyjulia_implmethod___index___1_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___index___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2186,7 +2410,7 @@ function pyjulia_implmethod___invert___1_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___invert___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2219,7 +2443,7 @@ function pyjulia_implmethod_write_2_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_write_2_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2248,7 +2472,7 @@ function pyjulia_implmethod_detach_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_detach_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2284,7 +2508,7 @@ function pyjulia_implmethod_readinto_2_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_readinto_2_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2320,7 +2544,7 @@ function pyjulia_implmethod_readinto1_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_readinto1_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2359,7 +2583,7 @@ function pyjulia_implmethod_read1_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_read1_1_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2398,7 +2622,7 @@ function pyjulia_implmethod_read_2_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod_read_2_1(x1, x2))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2427,7 +2651,7 @@ function pyjulia_implgetter_denominator_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implgetter_denominator_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2455,7 +2679,7 @@ function pyjulia_implgetter_numerator_1_1(y1, y2)
         r::PyPtr = pyjulia_retval(_pyjulia_implgetter_numerator_1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2484,7 +2708,7 @@ function pyjulia_implmethod___float___2_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___float___2_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2511,7 +2735,7 @@ function pyjulia_implmethod___bool___1_1(y1)
         r::Cint = pyjulia_retval(_pyjulia_implmethod___bool___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return (zero(Cint) - one(Cint))
     end
@@ -2538,7 +2762,7 @@ function pyjulia_implmethod___neg___1_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___neg___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2565,7 +2789,7 @@ function pyjulia_implmethod___pos___1_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___pos___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2592,7 +2816,7 @@ function pyjulia_implmethod___int___2_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___int___2_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end
@@ -2619,7 +2843,7 @@ function pyjulia_implmethod___abs___1_1(y1)
         r::PyPtr = pyjulia_retval(_pyjulia_implmethod___abs___1_1(x1))
         return r
     catch err
-        perr = unsafe_pyobj(err)
+        perr = unsafe_pyjulia((err, catch_backtrace()))
         pyerror_set(pyexc_JuliaException_type(), perr)
         return PyPtr(C_NULL)
     end

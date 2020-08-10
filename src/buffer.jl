@@ -1,16 +1,16 @@
 function _unsafe_pyisbuffer(o)
     b = uptr(_unsafe_pytype(o)).as_buffer[]
-    !isnull(b) && !isnull(b.getbuffer[])
+    !isnull(b) && !isnull(b.get[])
 end
 
 function _unsafe_pygetbuffer(o, view, flags)
     R = ValueOrError{Nothing}
     b = uptr(_unsafe_pytype(o)).as_buffer[]
-    if isnull(b) || isnull(b.getbuffer[])
+    if isnull(b) || isnull(b.get[])
         pyerror_set_TypeError("a bytes-like object is required")
         return R()
     end
-    e = ccall(b.getbuffer[Ptr], Cint, (PyPtr, Ptr{CPy_buffer}, Cint), o, view, flags)
+    e = ccall(b.get[Ptr], Cint, (PyPtr, Ptr{CPy_buffer}, Cint), o, view, flags)
     e == -1 ? R() : R(nothing)
 end
 
@@ -19,8 +19,8 @@ function _unsafe_pyreleasebuffer(o, view)
     obj = v.obj[]
     isnull(obj) && return
     b = uptr(_unsafe_pytype(o)).as_buffer[]
-    if !isnull(b) && !isnull(b.releasebuffer[])
-        ccall(b.releasebuffer[Ptr], Cvoid, (PyPtr, Ptr{CPy_buffer}), o, view)
+    if !isnull(b) && !isnull(b.release[])
+        ccall(b.release[Ptr], Cvoid, (PyPtr, Ptr{CPy_buffer}), o, view)
     end
     v.obj[] = C_NULL
     decref!(PyBorrowedRef(ptr(obj)))

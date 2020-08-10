@@ -115,6 +115,16 @@ function newpymappingmethods(; opts...)
 end
 newpymappingmethods(x::NamedTuple) = newpymappingmethods(; x...)
 
+### BUFFER PROCS
+
+function newpybufferprocs(; get=C_NULL, release=C_NULL)
+    c = newcache()
+    get = cacheptr!(c, get isa Union{Ptr, Base.CFunction} ? get : @cfunction($get, Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Cint)))
+    release = cacheptr!(c, release isa Union{Ptr, Base.CFunction} ? release : @cfunction($release, Cvoid, (Ptr{Cvoid}, Ptr{Cvoid})))
+    CPyBufferProcs(get=get, release=release), c
+end
+newpybufferprocs(x::NamedTuple) = newpybufferprocs(; x...)
+
 ### TYPE
 
 function pytypeflags(; stackless=PYISSTACKLESS, versiontag=false, getcharbuffer=false, sequencein=false, inplaceops=false, richcompare=false, weakrefs=false, iter=false, class=false, index=false, basetype=false)
@@ -138,7 +148,7 @@ end
 pytypeflags(x::Integer) = x
 pytypeflags(x::NamedTuple) = pytypeflags(;x...)
 
-function newpytype(; type=C_NULL, name, basicsize, flags=pytypeflags(), new=cglobal((:PyType_GenericNew, PYLIB)), methods=C_NULL, members=C_NULL, getset=C_NULL, as_number=C_NULL, as_sequence=C_NULL, as_mapping=C_NULL, opts...)
+function newpytype(; type=C_NULL, name, basicsize, flags=pytypeflags(), new=cglobal((:PyType_GenericNew, PYLIB)), methods=C_NULL, members=C_NULL, getset=C_NULL, as_number=C_NULL, as_sequence=C_NULL, as_mapping=C_NULL, as_buffer=C_NULL, opts...)
     cache = newcache()
     name = cachestr!(cache, name)
     flags = pytypeflags(flags)
@@ -206,6 +216,14 @@ function newpytype(; type=C_NULL, name, basicsize, flags=pytypeflags(), new=cglo
             mergecache!(cache, c)
             cacheptr!(cache, fill(m))
         end
+    as_buffer =
+        if as_buffer isa Ptr
+            as_buffer
+        else
+            m, c = newpybufferprocs(as_buffer)
+            mergecache!(cache, c)
+            cacheptr!(cache, fill(m))
+        end
     # generically deal with anything else
     newopts = Dict()
     for (n, x) in pairs(opts)
@@ -218,7 +236,7 @@ function newpytype(; type=C_NULL, name, basicsize, flags=pytypeflags(), new=cglo
     # make the type
     t = CPyTypeObject(; name=name, basicsize=basicsize, flags=flags, new=new,
         methods=methods, members=members, getset=getset, as_number=as_number,
-        as_mapping=as_mapping, as_sequence=as_sequence,
+        as_mapping=as_mapping, as_sequence=as_sequence, as_buffer=as_buffer,
         ob_base=CPyVarObject(base=CPyObject(type=type)), newopts...)
     return t, cache
 end

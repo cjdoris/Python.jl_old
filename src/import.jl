@@ -6,13 +6,9 @@ function unsafe_pyimportattr(mname, k)
     isnull(m) && return PYNULL
     unsafe_pygetattr(m, k)
 end
-function unsafe_pyimportattr(path::AbstractString)
-    i0 = firstindex(path)
-    i = findlast('.', path)
-    i1 = prevind(path, i)
-    i2 = nextind(path, i)
-    i3 = lastindex(path)
-    unsafe_pyimportattr(SubString(path, i0, i1), SubString(path, i2, i3))
+
+function unsafe_pyimportattrcall(mname, attr, args...; kwargs...)
+    f = unsafe_pyimportattr(mname, attr)
+    isnull(f) && return PYNULL
+    unsafe_pycall(f, args...; kwargs...)
 end
-pyimportattr(args...; kwargs...) = safe(unsafe_pyimportattr(args...; kwargs...))
-return pyimportattr

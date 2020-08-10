@@ -426,13 +426,10 @@ end
 ### BASE
 
 function Base.show(io::IO, o::PyObject)
+    str = isnull(o) ? "<NULL>" : pyrepr(String, o)
     get(io, :typeinfo, Any) === typeof(o) ||
-        print(io, "py: ")
-    if isnull(o)
-        print(io, "<NULL>")
-    else
-        print(io, pyrepr(String, o))
-    end
+        print(io, "py:", ('\n' in str || '\r' in str) ? '\n' : ' ')
+    print(io, str)
 end
 
 function Base.print(io::IO, o::PyObject)
@@ -449,6 +446,7 @@ Base.getproperty(o::PyObject, a::Symbol) =
 _getproperty(o::PyObject, ::Val{a}) where {a} =
     pygetattr(o, a)
 
+_getproperty(o::PyObject, ::Val{Symbol("jl!")}) = (T=Any)->pyconvert(T, o)
 _getproperty(o::PyObject, ::Val{Symbol("jl!b")}) = pytruth(o)
 _getproperty(o::PyObject, ::Val{Symbol("jl!s")}) = pystr(String, o)
 _getproperty(o::PyObject, ::Val{Symbol("jl!r")}) = pyrepr(String, o)

@@ -60,6 +60,8 @@ unsafe_pyobj(o::Time) = unsafe_pytime(o)
 unsafe_pyobj(o::Date) = unsafe_pydate(o)
 unsafe_pyobj(o::DateTime) = unsafe_pydatetime(o)
 unsafe_pyobj(o::IO) = unsafe_pybufferedio(o)
+unsafe_pyobj(o::NumpyDatetime64{unit}) where {unit} = unsafe_pyimportattrcall("numpy", "datetime64", o.value, string(unit))
+unsafe_pyobj(o::NumpyTimedelta64{unit}) where {unit} = unsafe_pyimportattrcall("numpy", "timedelta64", o.value, string(unit))
 unsafe_pyobj(o) = unsafe_pyjulia(o)
 
 PyObject(o::PyObject) = o

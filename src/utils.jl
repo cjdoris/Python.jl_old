@@ -187,16 +187,51 @@ make_f_contig_strides(elsz, sz1, sz...) = (elsz, (sz1 .* make_f_contig_strides(e
 
 make_c_contig_strides(elsz, sz...) = reverse(make_f_contig_strides(elsz, reverse(sz)...))
 
+"""
+    PaddingBytes{N}
+
+An object of size `N` representing nothing. Used to represent the padding between elements of a struct.
+"""
 struct PaddingBytes{N}
     bytes :: NTuple{N,UInt8}
 end
 
+"""
+    ByteReversed{T}
+
+A `T` but whose bytes are reversed.
+"""
 struct ByteReversed{T}
     reversed :: T
 end
 
+"""
+    PascalString{N}
+
+A Pascal-style string of length at most `N-1`.
+
+The first byte is the length of the string and the remaining bytes are the contents.
+"""
 struct PascalString{N}
     bytes :: NTuple{N,UInt8}
+end
+
+"""
+    NumpyDatetime64{unit}
+
+A `numpy.datetime64` with the given `unit` (e.g. `:D` for days or `:ns` for nanoseconds).
+"""
+struct NumpyDatetime64{unit}
+    value :: Int64
+end
+
+"""
+    NumpyTimedelta64{unit}
+
+A `numpy.timedelta64` with the given `unit` (e.g. `:D` for days or `:ns` for nanoseconds).
+"""
+struct NumpyTimedelta64{unit}
+    value :: Int64
 end
 
 @generated function unwrap_unionall(::Type{T}) where T

@@ -3,8 +3,8 @@ const CPy_hash_t = Cssize_t
 const CPy_ssize_t = Cssize_t
 
 Base.@kwdef struct CPyBufferProcs
-    getbuffer :: Ptr{Cvoid} # (o, Ptr{CPy_buffer}, Cint) -> Cint
-    releasebuffer :: Ptr{Cvoid} # (o, Ptr{CPy_buffer}) -> Cvoid
+    get :: Ptr{Cvoid} # (o, Ptr{CPy_buffer}, Cint) -> Cint
+    release :: Ptr{Cvoid} # (o, Ptr{CPy_buffer}) -> Cvoid
 end
 
 Base.@kwdef struct CPy_buffer

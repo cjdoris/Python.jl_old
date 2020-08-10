@@ -153,21 +153,170 @@ end"""
 [AbstractArray.shape]
 get = """o -> unsafe_pytuple_fromiter(size(o))"""
 
-[StridedArray.__array_interface__]
-get = """function (o)
-    d = Dict{String, PyObject}()
-    d["shape"] = @safe unsafe_pytuple_fromiter(size(o))
-    x, y, elsize = numpy_typestr_descr(eltype(o))
-    isnull(x) && @goto error
-    d["typestr"] = x
-    isnull(y) || (d["descr"] = y)
-    d["data"] = @safe unsafe_pytuple_fromiter((convert(Integer, Base.unsafe_convert(Ptr{eltype(o)}, o)), isimmutable(o)))
-    d["strides"] = @safe unsafe_pytuple_fromiter(elsize .* strides(o))
-    d["version"] = @safe unsafe_pyint(3)
-    return unsafe_pydict_fromstringpairs(d)
+[AbstractArray.ndim]
+get = """o -> unsafe_pyint(ndims(o))"""
+
+[AbstractArray.reshape]
+meth = """function (o, _sz)
+    msz = unsafe_pytryconvertfirst(Tuple{Vararg{Int}}, Tuple{Tuple{Vararg{Int}}}, _sz)
+    if msz.iserr
+        return PYNULL
+    elseif msz.isnothing
+        pyerror_set_TypeError("new shape must be tuple of integers")
+        return PYNULL
+    else
+        sz = msz.value isa Tuple{Vararg{Int}} ? msz.value : msz.value[1]
+        if prod(sz) == length(o)
+            return unsafe_pyjulia(reshape(o, sz))
+        else
+            pyerror_set_ValueError("cannot reshape array of size $(length(o)) to shape $(sz)")
+            return PYNULL
+        end
+    end
+end"""
+flags = ["varargs"]
+if = "hasmethod(reshape, Tuple{T, Vararg{Int}})"
+doc = """o.reshape(dims)
+
+A lazy view of `o` reshaped to have the given `dims`.
+
+Since Julia uses column-major indexing, this is equivalent to `numpy.reshape(o, dims, order="F")`.
+"""
+
+[AbstractArray.__array__]
+meth = """function (__o)
+    _o = PyBorrowedRef(__o)
+    o = _unsafe_pyjulia_getvalue(_o)
+    # if not a buffer type, copy the data to an Array and try again
+    _unsafe_pyisbuffer(_o) || return unsafe_pycall(@su pygetattr((@su pyjulia(Array(o))), "__array__"))
+    T = eltype(o)
+    N = ndims(o)
+    isz = Base.aligned_sizeof(eltype(o))
+    sz = size(o)
+    @assert length(sz) == N
+    st = isz .* strides(o)
+    @assert length(st) == N
+    dtype = @su numpy_dtype(T)
+    return unsafe_pyimportattrcall("numpy", "ndarray", sz, buffer=_o, strides=st, dtype=dtype)
     @label error
     return PYNULL
 end"""
+flags = ["noargs"]
+unwrap = false
+
+[StridedArray.__getbuffer__]
+smeth = """function (_o, _b, flags)
+    o = _unsafe_pyjulia_getvalue(_o)
+    b = uptr(_b)
+    cache = Any[o]
+    T = eltype(o)
+    N = ndims(o)
+    isz = Base.aligned_sizeof(T)
+
+    b.buf[] = pointer(o)
+
+    incref!(PyBorrowedRef(_o))
+    b.obj[] = _o
+
+    b.len[] = isz * length(o)
+
+    b.itemsize[] = isz
+
+    if iszero(flags & CPyBUF_WRITABLE)
+        b.readonly[] = isimmutable(o) ? 1 : 0
+    elseif isimmutable(o)
+        pyerror_set_BufferError("read only")
+        return -1
+    else
+        b.readonly[] = 0
+    end
+
+    b.ndim[] = N
+
+    if iszero(flags & CPyBUF_FORMAT)
+        b.format[] = C_NULL
+    else
+        if T === Cchar
+            fmt = "b"
+        elseif T === Cuchar
+            fmt = "B"
+        elseif T === Bool && sizeof(T) == 1
+            fmt = "?"
+        elseif T === Cshort
+            fmt = "h"
+        elseif T === Cushort
+            fmt = "H"
+        elseif T === Cint
+            fmt = "i"
+        elseif T === Cuint
+            fmt = "I"
+        elseif T === Clong
+            fmt = "l"
+        elseif T === Culong
+            fmt = "L"
+        elseif T === Clonglong
+            fmt = "q"
+        elseif T === Culonglong
+            fmt = "Q"
+        elseif T === Cssize_t
+            fmt = "n"
+        elseif T === Csize_t
+            fmt = "N"
+        elseif T === Float16
+            fmt = "e"
+        elseif T === Float32
+            fmt = "f"
+        elseif T === Float64
+            fmt = "d"
+        elseif T <: Ptr
+            fmt = "P"
+        else
+            pyerror_set_BufferError("format not implemented")
+            return -1
+        end
+        push!(cache, fmt)
+        b.format[] = pointer(fmt)
+    end
+
+    if iszero(flags & CPyBUF_ND)
+        b.shape[] = C_NULL
+    else
+        @assert length(size(o)) == N
+        sz = CPy_ssize_t[size(o)...]
+        push!(cache, sz)
+        b.shape[] = pointer(sz)
+    end
+
+    if iszero(flags & CPyBUF_STRIDES)
+        b.strides[] = C_NULL
+    else
+        @assert length(strides(o)) == N
+        st = CPy_ssize_t[(isz .* strides(o))...]
+        push!(cache, st)
+        b.strides[] = pointer(st)
+    end
+
+    b.suboffsets[] = C_NULL
+
+    # for a sanity check in __releasebuffer__
+    b.internal[] = _b
+
+    PYJLBUFCACHE[_b] = cache
+    return 0
+end"""
+unwrap = false
+
+[StridedArray.__releasebuffer__]
+smeth = """function (_o, _b)
+    b = uptr(_b)
+    @assert b.internal[] == _b
+    delete!(PYJLBUFCACHE, _b)
+    return nothing
+end
+"""
+unwrap = false
+catch = false
+
 
 [AbstractVector.__getitem_int__]
 smeth = "(o,i) -> unsafe_pyobj(getindex(o, i+firstindex(o)))"
